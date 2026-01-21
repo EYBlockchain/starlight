@@ -44,10 +44,7 @@ program
     '-m, --modify <modify>',
     'Ovewrite the file from truezapps folder',
   )
-  .option(
-    '--multi-tenant',
-    'Enable multi-user mode for zapps'
-  );
+  ;
 
 program.parse(process.argv);
 const opts = program.opts();
@@ -77,7 +74,6 @@ const options = {
   contractsDirPath,
   orchestrationDirPath,
   modifyAST,
-  multiTenant: opts.multiTenant || false,
 };
 
 const validateOptions = ({

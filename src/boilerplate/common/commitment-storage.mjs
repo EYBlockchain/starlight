@@ -9,9 +9,9 @@ import gen from 'general-number';
 import mongo from './mongo.mjs';
 import logger from './logger.mjs';
 import utils from 'zkp-utils';
-import { poseidonHash } from './number-theory.mjs';
+import { poseidonHash, sharedSecretKey } from './number-theory.mjs';
 import { generateProof } from './zokrates.mjs';
-import { KeyManager } from './key-management/KeyManager.mjs';
+import { getStoredKeys } from './contract.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -51,10 +51,9 @@ export function formatCommitment (commitment, context) {
       preimage,
       isNullified: commitment.isNullified,
       nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
-      accountId: context?.accountId || null,
       blockNumber: commitment.blockNumber || null,
     }
-    logger.debug(`Storing commitment ${data._id}${context?.accountId ? ` for accountId: ${context.accountId}` : ''}${domainParameters ? ` with domain parameters: ${JSON.stringify(domainParameters)}` : ''}`)
+    logger.debug(`Storing commitment ${data._id}${domainParameters ? ` with domain parameters: ${JSON.stringify(domainParameters)}` : ''}`)
   } catch (error) {
     console.error('Error formatting commitment --->', error)
     console.error('Commitment object:', JSON.stringify(commitment, null, 2))
@@ -98,27 +97,22 @@ export async function getCommitmentsById(id) {
 }
 
 // function to retrieve commitment with a specified stateVarId
-export async function getCurrentWholeCommitment(id, accountId) {
+export async function getCurrentWholeCommitment(id) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     'preimage.stateVarId': generalise(id).hex(32),
     isNullified: false,
   };
-
-  if (accountId) {
-    query.accountId = accountId;
-  }
   const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne(query);
   return commitment;
 }
 
 // function to retrieve commitment with a specified stateName
-export async function getCommitmentsByState(name, mappingKey = null, accountId = null, domainParameters = null) {
+export async function getCommitmentsByState(name, mappingKey = null, domainParameters = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
-  if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
 
   // Add domain parameter filters if provided
@@ -161,13 +155,12 @@ export async function getNullifiedCommitments() {
 /**
  * @returns {Promise<number>} The sum of the values ​​of all non-nullified commitments
  */
-export async function getBalance(accountId) {
+export async function getBalance() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = accountId ? { accountId } : {};
   const commitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find({ ...query, isNullified: false }) //  no nullified
+    .find({ isNullified: false }) //  no nullified
     .toArray();
 
   let sumOfValues = 0;
@@ -177,11 +170,10 @@ export async function getBalance(accountId) {
   return sumOfValues;
 }
 
-export async function getBalanceByState(name, mappingKey = null, accountId=null, domainParameters = null) {
+export async function getBalanceByState(name, mappingKey = null, domainParameters = null) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { name: name };
-  if (accountId) query['accountId'] = accountId;
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
 
   // Add domain parameter filters if provided
@@ -207,13 +199,12 @@ export async function getBalanceByState(name, mappingKey = null, accountId=null,
 /**
  * @returns all the commitments existent in this database.
  */
-export async function getAllCommitments(accountId) {
+export async function getAllCommitments() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = accountId ? { accountId } : {};
   const allCommitments = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find(query)
+    .find()
     .toArray();
   return allCommitments;
 }
@@ -486,36 +477,20 @@ export async function joinCommitments(
     .flat(Infinity);
   // Send transaction to the blockchain:
 
-  // Get tenant-specific keys
-  const keyManager = KeyManager.getInstance();
-  const keys = await keyManager.getKeys(context);
-  if (!keys || !keys.ethPK || !keys.ethSK) {
-    throw new Error('Tenant Ethereum keys not found. Please register keys first.');
-  }
+  const from = config.web3.options.defaultAccount || (await web3.eth.getAccounts())[0];
 
-  const txData = await instance.methods
+  const sendTxn = await instance.methods
     .joinCommitments(
       [oldCommitment_0_nullifier.integer, oldCommitment_1_nullifier.integer],
       oldCommitment_root.integer,
       [newCommitment.integer],
       proof,
     )
-    .encodeABI();
-
-  let txParams = {
-    from: keys.ethPK,
-    to: contractAddr,
-    gas: config.web3.options.defaultGas,
-    gasPrice: config.web3.options.defaultGasPrice,
-    data: txData,
-    chainId: await web3.eth.net.getId(),
-  };
-
-  const key = keys.ethSK;
-
-  const signed = await web3.eth.accounts.signTransaction(txParams, key);
-
-  const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+    .send({
+      from,
+      gas: config.web3.options.defaultGas,
+      gasPrice: config.web3.options.defaultGasPrice,
+    });
 
   let tx = await instance.getPastEvents('allEvents', {
     fromBlock: sendTxn?.blockNumber || 0,
@@ -732,25 +707,17 @@ export async function getSharedSecretskeys(
   context,
 ) {
    try {
-    // Use KeyManager for shared secret key management
-    const keyManager = KeyManager.getInstance();
+    const keys = getStoredKeys();
+    if (!keys || !keys.secretKey) {
+      throw new Error('Secret key not found. Please register keys first.');
+    }
 
-    logger.debug('Getting shared secret keys via KeyManager', {
-      recipientAddress: _recipientAddress,
-      multiTenant: !!context?.accountId
-    });
+    const recipientPublicKey = _recipientPublicKey || keys.publicKey;
+    const sharedKey = sharedSecretKey(generalise(keys.secretKey), generalise(recipientPublicKey));
 
-    const sharedPublicKey = await keyManager.getSharedSecretKeys(
-      _recipientAddress,
-      _recipientPublicKey,
-      context
-    );
+    logger.info('Shared secret keys retrieved successfully');
 
-    logger.info('Shared secret keys retrieved successfully', {
-      multiTenant: !!context?.accountId
-    });
-
-    return sharedPublicKey;
+    return sharedKey;
   } catch (error) {
     logger.error('Failed to get shared secret keys:', error);
     throw error;

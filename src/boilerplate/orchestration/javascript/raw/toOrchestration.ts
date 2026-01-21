@@ -724,7 +724,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           `${Orchestrationbp.initialiseKeys.postStatements(
            node.contractName,
            states[0],
-           node.msgSenderParam,
           ) }`,
         ],
       };
@@ -804,36 +803,6 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         statements: [
           `\n// Write new commitment preimage to db: \n`,
           lines.join('\n'),
-        ],
-      };
-
-    case 'GetInputCommitments':
-      for ([stateName, stateNode] of Object.entries(node.privateStates)) {
-        const stateVarIds = stateVariableIds({
-          privateStateName: stateName,
-          stateNode,
-        });
-        if (node.isConstructor) {
-          continue;
-        }
-        if (stateNode.isPartitioned) {
-          lines.push(
-            Orchestrationbp.getInputCommitments.postStatements({
-              stateName,
-              contractName: node.contractName,
-              stateType: 'partitioned',
-              mappingName: stateNode.mappingName || stateName,
-              structProperties: stateNode.structProperties,
-              isSharedSecret: stateNode.isSharedSecret,
-              stateVarIds,
-            }),
-          );
-        }
-      }
-      return {
-        statements: [
-          `\n// Get input commitments for partitioned states: \n\n`,
-          ...lines,
         ],
       };
 

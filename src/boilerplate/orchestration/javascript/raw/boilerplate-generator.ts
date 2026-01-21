@@ -42,7 +42,7 @@ class BoilerplateGenerator {
           \n // Initialise commitment preimage of whole accessed state:
           ${stateVarIds.join('\n')}
           \nlet ${stateName}_commitmentExists = true;
-          \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId, SAAS_CONTEXT_PARAM?.accountId);
+          \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
           \nconst ${stateName}_preimage = ${stateName}_commitment.preimage;
           \nconst ${stateName} = generalise(${stateName}_preimage.value);`];
         default:
@@ -51,7 +51,7 @@ class BoilerplateGenerator {
               ${stateVarIds.join('\n')}
               \nlet ${stateName}_commitmentExists = true;
               let ${stateName}_witnessRequired = true;
-              \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId, SAAS_CONTEXT_PARAM?.accountId);
+              \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
               \nlet ${stateName}_preimage = {
               \tvalue: ${structProperties ? `{` + structProperties.map(p => `${p}: 0`) + `}` : `0`},
               \tsalt: 0,
@@ -70,22 +70,20 @@ class BoilerplateGenerator {
 
 
   initialiseKeys = {
-    postStatements(contractName, onChainKeyRegistry, msgSenderParam): string[] {
-      const msgSenderLine = msgSenderParam ? `\nconst msgSender = generalise(keys.ethPK);` : '';
+    postStatements(contractName, onChainKeyRegistry): string[] {
       return [
         `
-        \n\n// Read keys using KeyManager
-        \nconst keyManager = KeyManager.getInstance();
-        \nlet keys = await keyManager.getKeys(context);
-        \nif (!keys) {
-        \n  // No keys found, register new ones
-        \n  await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry}, context);
-        \n  keys = await keyManager.getKeys(context);
-        \n}
-        \nconst secretKey = generalise(keys.secretKey);
-        \nconst publicKey = generalise(keys.publicKey);
-        \nconst sharedPublicKey = keys.sharedPublicKey ? generalise(keys.sharedPublicKey) : null;
-        \nconst sharedSecretKey = keys.sharedSecretKey ? generalise(keys.sharedSecretKey) : null;${msgSenderLine}
+        \n\n// Read dbs for keys and previous commitment values:
+        \nif (!fs.existsSync(keyDb)) await registerKey(utils.randomHex(31), '${contractName}', ${onChainKeyRegistry});
+        const keys = JSON.parse(
+                    fs.readFileSync(keyDb, 'utf-8', err => {
+                      console.log(err);
+                    }),
+                  );
+                const secretKey = generalise(keys.secretKey);
+                const publicKey = generalise(keys.publicKey);
+                const sharedPublicKey = generalise(keys.sharedPublicKey);
+                const sharedSecretKey = generalise(keys.sharedSecretKey);
                `
       ];
     },
@@ -184,32 +182,27 @@ class BoilerplateGenerator {
   };
 
   getInputCommitments = {
-    postStatements({
-      stateName,
+    postStatements(): string[] {
+      return [''];
+    },
+  };
+
+  membershipWitness = {
+    postStatements({ stateName,
       contractName,
-      stateType,
-      mappingName,
-      structProperties,
-      isSharedSecret,
-      stateVarIds,
-    }): string[] {
+      stateType, mappingName, structProperties, isSharedSecret, stateVarIds   }): string[] {
       const stateVarId: string[] = [];
-      if (stateVarIds.length > 1) {
-        stateVarId.push(stateVarIds[0].split(' = ')[1].split(';')[0]);
+      if(stateVarIds.length > 1){
+        stateVarId.push((stateVarIds[0].split(" = ")[1]).split(";")[0]);
         stateVarId.push(`${stateName}_stateVarId_key`);
-      } else stateVarId.push(`${stateName}_stateVarId`);
+      } else
+        stateVarId.push(`${stateName}_stateVarId`);
       switch (stateType) {
         case 'partitioned':
           if (structProperties)
-            return [
-              `
+          return [`
           \n\n// First check if required commitments exist or not
-          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(
-                structProperties,
-              ).map(
-                sp =>
-                  `generalise(parseInt(${stateName}_${sp}_newCommitmentValue.integer, 10) - parseInt(${stateName}_${sp}_newCommitmentValue_inc.integer, 10))`,
-              )}]).all;
+          \nconst ${stateName}_newCommitmentValue = generalise([${Object.values(structProperties).map((sp) => `generalise(parseInt(${stateName}_${sp}_newCommitmentValue.integer, 10) - parseInt(${stateName}_${sp}_newCommitmentValue_inc.integer, 10))`)}]).all;
           \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
             publicKey.hex(32),
             ${stateName}_newCommitmentValue.integer,
@@ -220,10 +213,19 @@ class BoilerplateGenerator {
           \nlet ${stateName}_witness_0;
           \nlet ${stateName}_witness_1;
 
-          `,
-            ];
-          return [
-            `
+          const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
+          const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
+          const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
+          const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
+            \n\n// generate witness for partitioned state
+            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
+            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
+            const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
+            const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
+            const ${stateName}_root = generalise(${stateName}_witness_0.root);
+            const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
+            const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
+          return [`
           \n\n// First check if required commitments exist or not
           \n${stateName}_newCommitmentValue = generalise(parseInt(${stateName}_newCommitmentValue.integer, 10) - parseInt(${stateName}_newCommitmentValue_inc.integer, 10));
             \nlet [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
@@ -236,7 +238,7 @@ class BoilerplateGenerator {
 
             if(${stateName}_1_oldCommitment === null && ${stateName}_commitmentFlag){
               \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
-               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3, context);
+               \n const tx = await splitCommitments('${contractName}', '${mappingName}', ${stateName}_newCommitmentValue, secretKey, publicKey, [${stateVarId.join(' , ')}], ${stateName}_0_oldCommitment, ${stateName}_witness_0, instance, contractAddr, web3);
                ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
                [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
@@ -250,57 +252,16 @@ class BoilerplateGenerator {
                 \n${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
                 \n${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
 
-                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3, context);
+                \n const tx = await joinCommitments('${contractName}', '${mappingName}', ${isSharedSecret? `sharedSecretKey, sharedPublicKey`: `secretKey, publicKey`}, [${stateVarId.join(' , ')}], [${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment], [${stateName}_witness_0, ${stateName}_witness_1], instance, contractAddr, web3);
 
                 ${stateName}_preimage = await getCommitmentsById(${stateName}_stateVarId);
 
                 [${stateName}_commitmentFlag, ${stateName}_0_oldCommitment, ${stateName}_1_oldCommitment] = getInputCommitments(
-                  ${
-                    isSharedSecret
-                      ? `sharedPublicKey.hex(32)`
-                      : `publicKey.hex(32)`
-                  },
+                  ${isSharedSecret ? `sharedPublicKey.hex(32)` : `publicKey.hex(32)`},
                   ${stateName}_newCommitmentValue.integer,
                   ${stateName}_preimage,
                 );
             }
-            `,
-          ];
-        default:
-          throw new TypeError(stateType);
-      }
-    },
-  };
-
-  membershipWitness = {
-    postStatements({
-      stateName,
-      contractName,
-      stateType,
-      mappingName,
-      structProperties,
-      isSharedSecret,
-      stateVarIds,
-    }): string[] {
-      switch (stateType) {
-        case 'partitioned':
-          if (structProperties)
-            return [
-              `
-          const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
-          const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
-          const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
-          const ${stateName}_1_prev = generalise(${stateName}_1_oldCommitment.preimage.value);
-            \n\n// generate witness for partitioned state
-            ${stateName}_witness_0 = await getMembershipWitness('${contractName}', generalise(${stateName}_0_oldCommitment._id).integer);
-            ${stateName}_witness_1 = await getMembershipWitness('${contractName}', generalise(${stateName}_1_oldCommitment._id).integer);
-            const ${stateName}_0_index = generalise(${stateName}_witness_0.index);
-            const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
-            const ${stateName}_root = generalise(${stateName}_witness_0.root);
-            const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
-            const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
-          return [
-            `
             const ${stateName}_0_prevSalt = generalise(${stateName}_0_oldCommitment.preimage.salt);
             const ${stateName}_1_prevSalt = generalise(${stateName}_1_oldCommitment.preimage.salt);
             const ${stateName}_0_prev = generalise(${stateName}_0_oldCommitment.preimage.value);
@@ -312,11 +273,9 @@ class BoilerplateGenerator {
           const ${stateName}_1_index = generalise(${stateName}_witness_1.index);
           const ${stateName}_root = generalise(${stateName}_witness_0.root);
           const ${stateName}_0_path = generalise(${stateName}_witness_0.path).all;
-          const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`,
-          ];
+          const ${stateName}_1_path = generalise(${stateName}_witness_1.path).all;\n`];
         case 'whole':
-          return [
-            `
+          return [`
             \n\n// generate witness for whole state
             const ${stateName}_emptyPath = new Array(32).fill(0);
             const ${stateName}_witness = ${stateName}_witnessRequired
@@ -324,22 +283,19 @@ class BoilerplateGenerator {
             \t: { index: 0, path:  ${stateName}_emptyPath, root: await getRoot('${contractName}') || 0 };
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
-            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`,
-          ];
+            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
         case 'accessedOnly':
-          return [
-            `
+          return [`
             \n\n// generate witness for whole accessed state
             const ${stateName}_witness = await getMembershipWitness('${contractName}', ${stateName}_currentCommitment.integer);
             const ${stateName}_index = generalise(${stateName}_witness.index);
             const ${stateName}_root = generalise(${stateName}_witness.root);
-            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`,
-          ];
+            const ${stateName}_path = generalise(${stateName}_witness.path).all;\n`];
         default:
           throw new TypeError(stateType);
       }
-    },
-  };
+  }
+};
 
   calculateNullifier = {
 
@@ -473,14 +429,10 @@ class BoilerplateGenerator {
         `\nimport { storeCommitment, getCurrentWholeCommitment, getCommitmentsById, getAllCommitments, getInputCommitments, joinCommitments, splitCommitments, markNullified} from './common/commitment-storage.mjs';`,
         `\nimport { generateProof } from './common/zokrates.mjs';`,
         `\nimport { getMembershipWitness, getRoot } from './common/timber.mjs';`,
-        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';`,
-        `\nimport { KeyManager } from './common/key-management/KeyManager.mjs';`,
-        `\nimport { autoFundIfNeeded } from './common/gas-funding.mjs';`,
-        `\nimport logger from './common/logger.mjs';
+        `\nimport { decompressStarlightKey, compressStarlightKey, encrypt, decrypt, poseidonHash, scalarMult } from './common/number-theory.mjs';
         \n`,
         `\nconst { generalise } = GN;`,
         `\nconst db = '/app/orchestration/common/db/preimage.json';`,
-        `\n// Legacy keyDb path - keys now managed through KeyManager`,
         `\nconst keyDb = '/app/orchestration/common/db/key.json';\n\n`,
       ];
     },
@@ -686,6 +638,9 @@ sendTransaction = {
       perParameters,
     }): string[] {
       let value;
+      const domainParamsCode = perParameters && perParameters.length > 0
+        ? `domainParameters: { ${perParameters.map(p => `${p.name}: ${p.name}_init`).join(', ')} },\n            `
+        : '';
       const errorCatch = `\n console.log("Added commitment", newCommitment.hex(32));
       } catch (e) {
         if (e.toString().includes("E11000 duplicate key")) {
@@ -696,32 +651,29 @@ sendTransaction = {
           );
         }
       }`;
-
-      // Generate domain parameters object if perParameters exist
-      const domainParamsCode = perParameters && perParameters.length > 0
-        ? `domainParameters: { ${perParameters.map(p => `${p.name}: ${p.name}_init`).join(', ')} },\n            `
-        : '';
-
       switch (stateType) {
         case 'increment':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }` : `${stateName}_newCommitmentValue`;
+          value = structProperties
+            ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_newCommitmentValue.integer[${i}]`)} }`
+            : `${stateName}_newCommitmentValue`;
           return [`try {
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
             name: '${mappingName}',
             mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
             ${domainParamsCode}preimage: {
-              \tstateVarId: generalise(${stateName}_stateVarId),
-              \tvalue: ${value},
-              \tsalt: ${stateName}_newSalt,
-              \tpublicKey: ${stateName}_newOwnerPublicKey,
+              	stateVarId: generalise(${stateName}_stateVarId),
+              	value: ${value},
+              	salt: ${stateName}_newSalt,
+              	publicKey: ${stateName}_newOwnerPublicKey,
             },
             secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
-            blockNumber: Number(tx.blockNumber),
             isNullified: false,
-          }, SAAS_CONTEXT_PARAM);` + errorCatch];
+          });` + errorCatch];
         case 'decrement':
-          value = structProperties ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }` : `${stateName}_change`;
+          value = structProperties
+            ? `{ ${structProperties.map((p, i) => `${p}: ${stateName}_change.integer[${i}]`)} }`
+            : `${stateName}_change`;
           return [`
             \nawait markNullified(generalise(${stateName}_0_oldCommitment._id), secretKey.hex(32));
             \nawait markNullified(generalise(${stateName}_1_oldCommitment._id), secretKey.hex(32));
@@ -731,66 +683,50 @@ sendTransaction = {
               name: '${mappingName}',
               mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
               ${domainParamsCode}preimage: {
-                \tstateVarId: generalise(${stateName}_stateVarId),
-                \tvalue: ${value},
-                \tsalt: ${stateName}_2_newSalt,
-                \tpublicKey: ${stateName}_newOwnerPublicKey,
+                	stateVarId: generalise(${stateName}_stateVarId),
+                	value: ${value},
+                	salt: ${stateName}_2_newSalt,
+                	publicKey: ${stateName}_newOwnerPublicKey,
               },
               secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
-              blockNumber: Number(tx.blockNumber),
               isNullified: false,
-            }, SAAS_CONTEXT_PARAM);`+ errorCatch];
+            });` + errorCatch];
         case 'whole':
           switch (burnedOnly) {
             case true:
               return [`
                 \nawait markNullified(${stateName}_currentCommitment, secretKey.hex(32));`];
             default:
-              value = structProperties ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }` : `${stateName}`;
+              value = structProperties
+                ? `{ ${structProperties.map(p => `${p}: ${stateName}.${p}`)} }`
+                : `${stateName}`;
               return [`
-                \n${reinitialisedOnly ? ' ': `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
+                \n${reinitialisedOnly ? ' ' : `if (${stateName}_commitmentExists) await markNullified(${stateName}_currentCommitment, secretKey.hex(32)); 
                `}
-               \n// Look up recipient's accountId for proper multi-tenant isolation
-                \nlet ${stateName}_recipientContext = SAAS_CONTEXT_PARAM;
-                \nif (SAAS_CONTEXT_PARAM && ${stateName}_newOwnerPublicKey.integer !== ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`}) {
-                  \n// Commitment is being transferred to a different user
-                  \nconst ${stateName}_recipientAddress = recipient.hex ? recipient.hex(20) : generalise(recipient).hex(20);
-                  \nconst keyManager = KeyManager.getInstance();
-                  \nconst ${stateName}_recipientAccountId = await keyManager.getAccountIdByEthAddress(${stateName}_recipientAddress);
-                  \nif (${stateName}_recipientAccountId) {
-                  \n${stateName}_recipientContext = { accountId: ${stateName}_recipientAccountId };
-                  \nlogger.debug(\`Storing commitment for recipient accountId: \${${stateName}_recipientAccountId}\`);
-                  \n} else {
-                  \nlogger.debug(\`Recipient \${${stateName}_recipientAddress} not registered, storing without accountId\`);
-                  \n${stateName}_recipientContext = undefined;
-                  \n}
-                \n}
                 \n try {
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
                   mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
                   ${domainParamsCode}preimage: {
-                    \tstateVarId: generalise(${stateName}_stateVarId),
-                    \tvalue: ${value},
-                    \tsalt: ${stateName}_newSalt,
-                    \tpublicKey: ${stateName}_newOwnerPublicKey,
+                    	stateVarId: generalise(${stateName}_stateVarId),
+                    	value: ${value},
+                    	salt: ${stateName}_newSalt,
+                    	publicKey: ${stateName}_newOwnerPublicKey,
                   },
                   secretKey: ${stateName}_newOwnerPublicKey.integer === ${isSharedSecret ? `sharedPublicKey.integer` : `publicKey.integer`} ? ${isSharedSecret ? `sharedSecretKey` : `secretKey`}: null,
-                  blockNumber: Number(tx.blockNumber),
                   isNullified: false,
-                }, ${stateName}_recipientContext);` + errorCatch];
+                });` + errorCatch];
           }
         default:
           throw new TypeError(stateType);
-      } // TODO: we might eventually import some underflow/overflow functions.
+      }
     },
-};
+  };
 
   integrationTestBoilerplate = {
     import(): string {
-      return `import { FUNCTION_CAP_NAMEManager } from './FUNCTION_NAME.mjs';\n
-    `;
+      return `import { FUNCTION_NAME } from './FUNCTION_NAME.mjs';\n`;
     },
     encryption(): string {
       return `
@@ -804,12 +740,6 @@ sendTransaction = {
             const plainText = decrypt(encryption.msgs, secretKey, encryption.key);
             console.log('Decrypted plainText:');
             console.log(plainText);
-            const salt = plainText[plainText.length - 1];
-            const commitmentSet = await getAllCommitments();
-            const thisCommit = commitmentSet.find(c => generalise(c.preimage.salt).integer === generalise(salt).integer);
-            assert.equal(!!thisCommit, true);
-
-          } catch (err) {
             logger.error(err);
             process.exit(1);
           }
@@ -859,7 +789,7 @@ integrationApiServicesBoilerplate = {
     `
   },
   preStatements(): string{
-    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\nimport { KeyManager } from './common/key-management/KeyManager.mjs';\n\n
+    return ` import { startEventFilter, getSiblingPath } from './common/timber.mjs';\nimport fs from "fs";\nimport logger from './common/logger.mjs';\nimport { decrypt } from "./common/number-theory.mjs";\nimport { getAllCommitments, getCommitmentsByState, getBalance, getSharedSecretskeys , getBalanceByState } from "./common/commitment-storage.mjs";\nimport { backupDataRetriever } from "./BackupDataRetriever.mjs";\nimport { backupVariable } from "./BackupVariable.mjs";\nimport web3 from './common/web3.mjs';\n\n
         /**
       NOTE: this is the api service file, if you need to call any function use the correct url and if Your input contract has two functions, add() and minus().
       minus() cannot be called before an initial add(). */
@@ -893,8 +823,7 @@ integrationApiServicesBoilerplate = {
     return `
       export async function service_allCommitments(req, res, next) {
         try {
-          const accountId = req.saasContext?.accountId;
-          const commitments = await getAllCommitments(accountId);
+          const commitments = await getAllCommitments();
           res.send({ commitments });
           await sleep(10);
         } catch (err) {
@@ -904,8 +833,8 @@ integrationApiServicesBoilerplate = {
       }
       export async function service_getBalance(req, res, next) {
         try {
-          const accountId = req.saasContext?.accountId;
-          const sum = await getBalance(accountId);
+      
+          const sum = await getBalance();
           res.send( {"totalBalance": sum} );
         } catch (error) {
           console.error("Error in calculation :", error);
@@ -915,22 +844,20 @@ integrationApiServicesBoilerplate = {
 
       export async function service_getBalanceByState(req, res, next) {
         try {
-          const { name, mappingKey, domainParameters } = req.body;
-          const accountId = req.saasContext?.accountId;
-          const balance = await getBalanceByState(name, mappingKey, accountId, domainParameters);
+          const { name, mappingKey } = req.body;
+          const balance = await getBalanceByState(name, mappingKey);
           res.send( {"totalBalance": balance} );
         } catch (error) {
           console.error("Error in calculation :", error);
           res.status(500).send({ error: err.message });
         }
       }
-
-
+      
+      
       export async function service_getCommitmentsByState(req, res, next) {
         try {
-          const { name, mappingKey, domainParameters } = req.body;
-          const accountId = req.saasContext?.accountId;
-          const commitments = await getCommitmentsByState(name, mappingKey, accountId, domainParameters);
+          const { name, mappingKey } = req.body;
+          const commitments = await getCommitmentsByState(name, mappingKey);
           res.send({ commitments });
           await sleep(10);
         } catch (err) {
@@ -942,8 +869,7 @@ integrationApiServicesBoilerplate = {
       
       export async function service_backupData(req, res, next) {
         try {
-            SAAS_CONTEXT_HANDLING
-            await backupDataRetriever(SAAS_CONTEXT_DIRECT);
+            await backupDataRetriever();
             res.send("Complete");
             await sleep(10);
         } catch (err) {
@@ -954,8 +880,7 @@ integrationApiServicesBoilerplate = {
       export async function service_backupVariable(req, res, next) {
         try {
           const { name } = req.body;
-          SAAS_CONTEXT_HANDLING
-          await backupVariable(name, SAAS_CONTEXT_PARAM);
+          await backupVariable(name);
           res.send("Complete");
           await sleep(10);
         } catch (err) {
@@ -967,284 +892,17 @@ integrationApiServicesBoilerplate = {
         try {
           const { recipientAddress } = req.body;
           const recipientPubKey = req.body.recipientPubKey || 0
-          SAAS_CONTEXT_HANDLING
-          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey, SAAS_CONTEXT_PARAM);
+          const SharedKeys = await getSharedSecretskeys(recipientAddress, recipientPubKey );
           res.send({ SharedKeys });
           await sleep(10);
         } catch (err) {
           logger.error(err);
           res.send({ errors: [err.message] });
         }
-      }
-      export async function service_registerKeys(req, res, next) {
-        try {
-          SAAS_CONTEXT_HANDLING
-
-          const keyManager = KeyManager.getInstance();
-          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
-
-          if (keys) {
-            return res.send({
-              success: true,
-              message: 'Keys already registered',
-              address: keys.ethPK,
-              publicKey: keys.publicKey
-            });
-          }
-
-          logger.info('Registering new keys', { accountId: SAAS_CONTEXT_PARAM?.accountId });
-
-          const utils = await import('zkp-utils');
-          const { registerKey } = await import('./common/contract.mjs');
-
-          const publicKey = await registerKey(
-            utils.default.randomHex(31),
-            'CONTRACT_NAME',
-            true,
-            SAAS_CONTEXT_PARAM
-          );
-
-          keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
-
-          res.send({
-            success: true,
-            message: 'Keys registered successfully',
-            address: keys.ethPK,
-            publicKey: keys.publicKey,
-            zkpPublicKey: publicKey.integer
-          });
-        } catch (err) {
-          logger.error('Failed to register keys:', err);
-          res.send({ errors: [err.message] });
-        }
-      }
-
-      export async function service_getAddress(req, res, next) {
-        try {
-          SAAS_CONTEXT_HANDLING
-
-          const keyManager = KeyManager.getInstance();
-          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
-
-          if (!keys) {
-            return res.send({
-              success: false,
-              message: 'No keys found. Please call /registerKeys first.'
-            });
-          }
-
-          res.send({
-            address: keys.ethPK,
-            publicKey: keys.publicKey
-          });
-        } catch (err) {
-          logger.error(err);
-          res.send({ errors: [err.message] });
-        }
-      }
-
-      export async function service_mintNFT(req, res, next) {
-        try {
-          const { tokenId, nftContract } = req.body;
-          SAAS_CONTEXT_HANDLING
-
-          const keyManager = KeyManager.getInstance();
-          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
-
-          if (!keys) {
-            return res.send({
-              success: false,
-              message: 'No keys found. Please call /registerKeys first.'
-            });
-          }
-
-          const { getContractAddress, getContractInterface } = await import('./common/contract.mjs');
-          // Use provided nftContract address or fall back to default ERC721
-          const erc721Address = nftContract || await getContractAddress('ERC721');
-          const erc721Interface = await getContractInterface('ERC721');
-          const Web3 = await import('./common/web3.mjs');
-          const web3 = Web3.default.connection();
-          const erc721 = new web3.eth.Contract(erc721Interface.abi, erc721Address);
-
-          try {
-            const owner = await erc721.methods.ownerOf(tokenId).call();
-            if (owner && owner !== '0x0000000000000000000000000000000000000000') {
-              return res.send({
-                success: false,
-                message: \`Token \${tokenId} already exists (owner: \${owner})\`
-              });
-            }
-          } catch (error) {
-            // Token doesn't exist - expected
-          }
-
-          const accounts = await web3.eth.getAccounts();
-          const defaultAccount = accounts[0];
-
-          logger.info(\`Minting token \${tokenId} to \${keys.ethPK}\`);
-
-          const mintTx = await erc721.methods
-            .mint(keys.ethPK, tokenId)
-            .send({ from: defaultAccount, gas: 500000 });
-
-          res.send({
-            success: true,
-            tokenId: tokenId,
-            owner: keys.ethPK,
-            txHash: mintTx.transactionHash
-          });
-        } catch (err) {
-          logger.error('Failed to mint NFT:', err);
-          res.send({ errors: [err.message] });
-        }
-      }
-
-      export async function service_approveNFT(req, res, next) {
-        try {
-          const { tokenId, nftContract } = req.body;
-          SAAS_CONTEXT_HANDLING
-
-          const keyManager = KeyManager.getInstance();
-          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
-
-          if (!keys) {
-            return res.send({
-              success: false,
-              message: 'No keys found. Please call /registerKeys first.'
-            });
-          }
-
-          const { getContractAddress, getContractInterface } = await import('./common/contract.mjs');
-          // Use provided nftContract address or fall back to default ERC721
-          const erc721Address = nftContract || await getContractAddress('ERC721');
-          const erc721Interface = await getContractInterface('ERC721');
-          const Web3 = await import('./common/web3.mjs');
-          const web3 = Web3.default.connection();
-          const erc721 = new web3.eth.Contract(erc721Interface.abi, erc721Address);
-
-          const escrowAddress = await getContractAddress('CONTRACT_NAME');
-
-          const currentApproval = await erc721.methods.getApproved(tokenId).call();
-
-          if (currentApproval.toLowerCase() === escrowAddress.toLowerCase()) {
-            return res.send({
-              success: true,
-              message: 'Token already approved',
-              tokenId: tokenId,
-              spender: escrowAddress
-            });
-          }
-
-          logger.info(\`Approving token \${tokenId} for escrow\`);
-
-          const txData = await erc721.methods
-            .approve(escrowAddress, tokenId)
-            .encodeABI();
-
-          const config = await import('config');
-
-          let txParams = {
-            from: keys.ethPK,
-            to: erc721Address,
-            gas: 500000,
-            gasPrice: config.default.web3.options.defaultGasPrice,
-            data: txData,
-            chainId: await web3.eth.net.getId(),
-          };
-
-          const signed = await web3.eth.accounts.signTransaction(txParams, keys.ethSK);
-          const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-
-          res.send({
-            success: true,
-            tokenId: tokenId,
-            spender: escrowAddress,
-            txHash: sendTxn.transactionHash
-          });
-        } catch (err) {
-          logger.error('Failed to approve NFT:', err);
-          res.send({ errors: [err.message] });
-        }
-      }
-
-      export async function service_deployNFT(req, res, next) {
-        try {
-          const { name, symbol } = req.body;
-          SAAS_CONTEXT_HANDLING
-
-          const keyManager = KeyManager.getInstance();
-          let keys = await keyManager.getKeys(SAAS_CONTEXT_PARAM);
-
-          if (!keys) {
-            return res.send({
-              success: false,
-              message: 'No keys found. Please call /registerKeys first.'
-            });
-          }
-
-          if (!name || !symbol) {
-            return res.send({
-              errors: ['name and symbol are required']
-            });
-          }
-
-          logger.info(\`Deploying new ERC721 contract: \${name} (\${symbol})\`);
-
-          const { getContractInterface, getContractBytecode } = await import('./common/contract.mjs');
-          const Web3 = await import('./common/web3.mjs');
-          const web3 = Web3.default.connection();
-
-          // Get the ERC721 contract interface and bytecode
-          const erc721Interface = await getContractInterface('ERC721');
-          const erc721Bytecode = await getContractBytecode('ERC721');
-
-          // Create a new contract instance
-          const erc721Contract = new web3.eth.Contract(erc721Interface.abi);
-
-          // Deploy the contract
-          const deployTx = erc721Contract.deploy({
-            data: erc721Bytecode,
-            arguments: [name, symbol]
-          });
-
-          const config = await import('config');
-
-          // Auto-fund tenant address if needed (same as other endpoints)
-          const { autoFundIfNeeded } = await import('./common/gas-funding.mjs');
-          await autoFundIfNeeded(keys.ethPK, '0.1', '0.5');
-
-          // Estimate gas for deployment
-          const gas = await deployTx.estimateGas({ from: keys.ethPK });
-
-          // Send the deployment transaction using tenant's keys
-          const txParams = {
-            from: keys.ethPK,
-            data: deployTx.encodeABI(),
-            gas: Math.floor(Number(gas) * 1.2), // Add 20% buffer
-            gasPrice: config.default.web3.options.defaultGasPrice,
-            chainId: await web3.eth.net.getId()
-          };
-
-          const signed = await web3.eth.accounts.signTransaction(txParams, keys.ethSK);
-          const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-
-          const deployedAddress = receipt.contractAddress;
-
-          logger.info(\`ERC721 contract deployed at: \${deployedAddress}\`);
-
-          res.send({
-            success: true,
-            contractAddress: deployedAddress,
-            name: name,
-            symbol: symbol,
-            txHash: receipt.transactionHash
-          });
-        } catch (err) {
-          logger.error('Failed to deploy NFT contract:', err);
-          res.send({ errors: [err.message] });
-        }
-      }
-      `;
+      }`
+      
+      
+      ;
   }
 
 
@@ -1264,30 +922,24 @@ integrationApiRoutesBoilerplate = {
     return `router.post('/FUNCTION_NAME', this.serviceMgr.service_FUNCTION_NAME.bind(this.serviceMgr),);`
   },
   commitmentImports(): string {
-    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable, service_registerKeys, service_getAddress, service_mintNFT, service_approveNFT, service_deployNFT, } from "./api_services.mjs";\n`;
+    return `import { service_allCommitments, service_getCommitmentsByState, service_getSharedKeys, service_getBalance, service_getBalanceByState, service_backupData, service_backupVariable,} from "./api_services.mjs";\n`;
   },
   commitmentRoutes(): string {
     return `// commitment getter routes
     router.get("/getAllCommitments", service_allCommitments);
-    router.post("/getCommitmentsByVariableName", service_getCommitmentsByState);
+    router.get("/getCommitmentsByVariableName", service_getCommitmentsByState);
     router.get("/getBalance", service_getBalance);
-    router.post("/getBalanceByState", service_getBalanceByState);
+    router.get("/getBalanceByState", service_getBalanceByState);
     router.post("/getSharedKeys", service_getSharedKeys);
     // backup route
     router.post("/backupDataRetriever", service_backupData);
     router.post("/backupVariable", service_backupVariable);
-    // key management routes
-    router.post("/registerKeys", service_registerKeys);
-    router.get("/getAddress", service_getAddress);
-    router.post("/mintNFT", service_mintNFT);
-    router.post("/approveNFT", service_approveNFT);
-    router.post("/deployNFT", service_deployNFT);
     `;
   }
 };
 
-zappFilesBoilerplate = (multiTenant = false) => {
-  const baseFiles = [
+zappFilesBoilerplate = () => {
+  return [
     {
       readPath: pathPrefix + '/config/default.js',
       writePath: '/config/default.js',
@@ -1379,48 +1031,6 @@ zappFilesBoilerplate = (multiTenant = false) => {
       generic: false,
     },
 ];
-
-if (multiTenant) {
-      baseFiles.push(
-      {
-        readPath: pathPrefix + '/middleware/saas-context.mjs',
-        writePath: './orchestration/common/middleware/saas-context.mjs',
-        generic: false,
-      },
-      {
-        readPath: pathPrefix + '/key-management/IKeyStorage.mjs',
-        writePath: './orchestration/common/key-management/IKeyStorage.mjs',
-        generic: false,
-      },
-      {
-        readPath: pathPrefix + '/key-management/FileKeyStorage.mjs',
-        writePath: './orchestration/common/key-management/FileKeyStorage.mjs',
-        generic: false,
-      },
-      {
-        readPath: pathPrefix + '/key-management/DatabaseKeyStorage.mjs',
-        writePath: './orchestration/common/key-management/DatabaseKeyStorage.mjs',
-        generic: false,
-      },
-      {
-        readPath: pathPrefix + '/key-management/KeyManager.mjs',
-        writePath: './orchestration/common/key-management/KeyManager.mjs',
-        generic: false,
-      },
-      {
-        readPath: pathPrefix + '/key-management/encryption.mjs',
-        writePath: './orchestration/common/key-management/encryption.mjs',
-        generic: false,
-      },
-      {
-        readPath: pathPrefix + '/key-management/index.mjs',
-        writePath: './orchestration/common/key-management/index.mjs',
-        generic: false,
-      }
-    );
-  }
-
-  return baseFiles;
 }
 
 }

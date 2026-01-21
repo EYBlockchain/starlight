@@ -1,13 +1,30 @@
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import config from 'config';
 import GN from 'general-number';
-import utils from 'zkp-utils';
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
-import { KeyManager } from './key-management/KeyManager.mjs';
 
 const web3 = Web3.connection();
 const { generalise } = GN;
+const keyDbPath = process.env.KEY_DB_PATH
+	|| path.resolve(path.dirname(fileURLToPath(import.meta.url)), './db/key.json');
+
+function loadKeysFromDisk() {
+	if (!fs.existsSync(keyDbPath)) return null;
+	try {
+		return JSON.parse(fs.readFileSync(keyDbPath, 'utf8'));
+	} catch (err) {
+		logger.warn('Unable to read key database, regenerating keys', err);
+		return null;
+	}
+}
+
+function persistKeys(keys) {
+	fs.mkdirSync(path.dirname(keyDbPath), { recursive: true });
+	fs.writeFileSync(keyDbPath, JSON.stringify(keys, null, 2));
+}
 
 export const contractPath = (contractName) => {
 	return `/app/build/contracts/${contractName}.json`;
@@ -121,32 +138,31 @@ export async function registerKey(
   context,
 ) {
 	try {
-		// Use KeyManager for key registration
-		const keyManager = KeyManager.getInstance();
-
-		logger.debug('Registering key via KeyManager', {
-			contractName,
-			registerWithContract,
-			multiTenant: !!context?.accountId
-		});
-
-		const publicKeyInteger = await keyManager.registerKey(
-			_secretKey,
-			contractName,
-			registerWithContract,
-			context
-		);
-		
-		const publicKey = generalise(publicKeyInteger);
-
+		const secretKeyGN = generalise(_secretKey);
+		const secretKey = secretKeyGN.hex ? secretKeyGN.hex(32) : `${secretKeyGN}`;
+		const publicKeyGN = secretKeyGN;
+		const publicKey = publicKeyGN.hex ? publicKeyGN.hex(32) : `${publicKeyGN}`;
+		const sharedPublicKey = publicKey;
+		const sharedSecretKey = secretKey;
+		const keys = {
+			secretKey,
+			publicKey,
+			sharedPublicKey,
+			sharedSecretKey,
+			ethPK: config.web3.options.defaultAccount,
+			ethSK: config.web3.key,
+		};
+		persistKeys(keys);
 		logger.info('Key registered successfully', {
-			publicKey: publicKey.integer,
-			multiTenant: !!context?.accountId
+			publicKey,
 		});
-
-		return publicKey;
+		return generalise(publicKey);
 	} catch (error) {
 		logger.error('Failed to register key:', error);
 		throw error;
 	}
+}
+
+export function getStoredKeys() {
+	return loadKeysFromDisk();
 }

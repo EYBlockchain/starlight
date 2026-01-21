@@ -457,7 +457,6 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functions = [],
         constructorParams = [],
         contractImports = [],
-        multiTenant = false,
       } = fields;
       return {
         nodeType,
@@ -466,7 +465,6 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         functions,
         constructorParams,
         contractImports,
-        multiTenant,
       };
     }
     case 'IntegrationApiRoutesBoilerplate': {

@@ -213,18 +213,15 @@ const prepareIntegrationApiServices = (node: any) => {
 
     fnboilerplate = fnboilerplate.replace(/_RESPONSE_/g, returnParams + publicReturns);
 
-        // Handle SaaS context placeholders based on multi-tenant flag
+    // Always single-tenant
     fnboilerplate = fnboilerplate.replace(
       /SAAS_CONTEXT_HANDLING/g,
-      node.multiTenant
-        ? `// Pass context for multi-tenant support (available via saasContextMiddleware)
-    const context = req.saasContext;`
-        : `// Single-tenant mode - no context needed`,
+      `// Single-tenant mode - no context needed`,
     );
 
     fnboilerplate = fnboilerplate.replace(
       /SAAS_CONTEXT_PARAM/g,
-      node.multiTenant ? `context` : `undefined`,
+      `undefined`,
     );
 
     // replace function imports at top of file
@@ -237,22 +234,19 @@ const prepareIntegrationApiServices = (node: any) => {
   // add linting and config
   const preprefix = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */ \nimport config from 'config';\nimport assert from 'assert';\n`;
 
-  // Handle SaaS context in commitments functions
+  // Handle SaaS context in commitments functions (single-tenant)
   let commitmentsCode = genericApiServiceFile.commitments();
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_HANDLING/g,
-    node.multiTenant
-      ? `// Pass context for multi-tenant support
-          const context = req.saasContext;`
-      : `// Single-tenant mode - no context needed`,
+    `// Single-tenant mode - no context needed`,
   );
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_PARAM/g,
-    node.multiTenant ? `context` : `undefined`,
+    `undefined`,
   );
   commitmentsCode = commitmentsCode.replace(
     /SAAS_CONTEXT_DIRECT/g,
-    node.multiTenant ? `context` : `undefined`,
+    `undefined`,
   );
   commitmentsCode = commitmentsCode.replace(
     /CONTRACT_NAME/g,
@@ -873,8 +867,8 @@ const prepareBackupDataRetriever = (node: any) => {
   import {
     getContractInstance,
     getContractAddress,
+    getStoredKeys,
   } from "./common/contract.mjs";
-    import { KeyManager } from "./common/key-management/KeyManager.mjs";
   
   import Web3 from "./common/web3.mjs";
   import {
@@ -917,9 +911,7 @@ const prepareBackupDataRetriever = (node: any) => {
   
     const backDataEvent =   await instance.getPastEvents('EncryptedBackupData',{fromBlock: 0, toBlock: 'latest'} );
   
-      // Use KeyManager for key retrieval
-    const keyManager = KeyManager.getInstance();
-    const keys = await keyManager.getKeys(context);
+    const keys = getStoredKeys();
 
     if (!keys) {
       throw new Error('No keys found. Please register keys first.');
@@ -1091,7 +1083,7 @@ export default function fileGenerator(node: any) {
 
       fileContent = fileContent.replace(
         /SAAS_CONTEXT_PARAM/g,
-        node.multiTenant ? `context` : `undefined`,
+        `undefined`,
       );
       return [
         {

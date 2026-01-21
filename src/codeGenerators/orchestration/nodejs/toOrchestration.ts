@@ -337,7 +337,11 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'SendPublicTransaction':
     case 'Imports':
     case 'KeyRegistrationFunction':
-      return `${OrchestrationCodeBoilerPlate(node).statements.join('')}`;
+      {
+        const boilerplate = OrchestrationCodeBoilerPlate(node);
+        const statements = boilerplate?.statements ?? [];
+        return `${statements.join('')}`;
+      }
     // And if we haven't recognized the node, we'll throw an error.
     default:
       throw new TypeError(node.nodeType);
