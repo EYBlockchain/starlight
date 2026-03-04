@@ -36,7 +36,6 @@ export class ServiceManager{
 
  async service_FUNCTION_NAME (req, res, next){
 	try {
-    await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
     const { _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
     res.send({_RESPONSE_ });
