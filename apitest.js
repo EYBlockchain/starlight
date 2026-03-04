@@ -587,6 +587,16 @@ res.NFT_Escrow = await callZAppAPIs(
   '"NA"',
 );
 
+const apiRequests_PublicContract = [
+  { method: 'post', endpoint: '/addPublic', data: { value: 5 } },
+  { method: 'get', endpoint: '/readB' },
+];
+
+res.PublicContract = await callZAppAPIs(
+  'PublicContract',
+  apiRequests_PublicContract,
+);
+
 const apiRequests_Return = [
   { method: 'post', endpoint: '/add', data: { value: 21 } },
   { method: 'post', endpoint: '/remove', data: { value: 17, value1: 12 } },
@@ -1276,6 +1286,17 @@ describe('NFT_Escrow Zapp', () => {
     expect(res.NFT_Escrow[14].body.commitments[0].isNullified).to.equal(true);
     expect(res.NFT_Escrow[15].body.commitments[0].isNullified).to.equal(true);
     expect(res.NFT_Escrow[15].body.commitments[1].isNullified).to.equal(false);
+  });
+});
+
+describe('Public Contract Zapp', () => {
+  afterEach(function () {
+    if (this.currentTest.state === 'failed') {
+      displayLogsForZapp('PublicContract');
+    }
+  });
+  it('test public read only function', async () => {
+    expect(parseInt(res.PublicContract[1].body.publicReturns)).to.equal(10);
   });
 });
 
