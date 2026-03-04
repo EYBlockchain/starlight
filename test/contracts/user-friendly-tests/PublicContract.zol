@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: CC0
+ 
+pragma solidity ^0.8.0;
+ 
+contract Assign {
+ 
+   uint256 public b;
+   bool public isTerminated;
+
+  function addPublic( uint256 value) public {
+    b = 2 * value;
+  }
+
+
+  function readB() public view returns (uint256) {
+    return b;
+  }
+ 
+  function terminateContract() public {
+    isTerminated = true;
+  }
+ 
+}
