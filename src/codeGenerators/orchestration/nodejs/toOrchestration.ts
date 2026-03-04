@@ -272,6 +272,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         case 'address':
           if (options?.contractCall) return `${node.name}.hex(20)`
           return `${node.name}.integer`;
+        case 'bytes20':
+          return `${node.name}.integer`;
         case 'generalNumber':
           return `generalise(${node.name})`;
       }
