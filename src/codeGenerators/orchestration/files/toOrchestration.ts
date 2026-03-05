@@ -687,18 +687,27 @@ const prepareBackupVariable = (node: any) => {
         let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
         let varName = log.returnValues.encPreimages[i].varName;
         let name = varName.split(" ")[0];
-        const structProperties = varName.split("props:")[1]?.trim();
+        const structMetadata = varName.split("props:")[1]?.trim();
+        const structProperties = structMetadata?.split(" types:")[0]?.trim();
+        const structTypeNames = structMetadata
+          ?.split(" types:")[1]
+          ?.trim()
+          ?.split(" ")
+          ?.filter(Boolean) || null;
         varName = varName.split("props:")[0]?.trim();
         if (requestedName !== name) {
           continue;
         }
-        let isArray = false;
-        let isStruct = false;
-        if (varName.includes(" a")) {
-          isArray = true;
-        } 
-        if (varName.includes(" s")) {
-          isStruct = true;
+        const flags = varName.split(" ").slice(1);
+        const isArray = flags.includes("a");
+        const isStruct = flags.includes("s");
+        const isBytes20 = flags.includes("b20");
+        const isAddress = flags.includes("addr");
+        let commitmentType = null;
+        if (isBytes20) {
+          commitmentType = "bytes20";
+        } else if (isAddress) {
+          commitmentType = "address";
         }
         const plainText = decrypt(
           cipherText,
@@ -739,7 +748,7 @@ const prepareBackupVariable = (node: any) => {
         if (isStruct){
           value = {};
           let count = isArray ? 3 : 2;
-          for (const prop of structProperties.split(" ")) {
+          for (const prop of structProperties?.split(" ").filter(Boolean) || []) {
             value[prop] = plainText[count];
             count++;
           }
@@ -803,6 +812,8 @@ const prepareBackupVariable = (node: any) => {
           hash: newCommitment,
           name: name,
           mappingKey: mappingKey?.integer,
+          type: commitmentType,
+          typeNames: structTypeNames,
           preimage: {
             stateVarId: stateVarId,
             value: value,
@@ -913,15 +924,24 @@ const prepareBackupDataRetriever = (node: any) => {
           let ephPublicKey = log.returnValues.encPreimages[i].ephPublicKey;
           let varName = log.returnValues.encPreimages[i].varName;
           let name = varName.split(" ")[0];
-          const structProperties = varName.split("props:")[1]?.trim();
+          const structMetadata = varName.split("props:")[1]?.trim();
+          const structProperties = structMetadata?.split(" types:")[0]?.trim();
+          const structTypeNames = structMetadata
+            ?.split(" types:")[1]
+            ?.trim()
+            ?.split(" ")
+            ?.filter(Boolean) || null;
           varName = varName.split("props:")[0]?.trim();
-          let isArray = false;
-          let isStruct = false;
-          if (varName.includes(" a")) {
-            isArray = true;
-          } 
-          if (varName.includes(" s")) {
-            isStruct = true;
+          const flags = varName.split(" ").slice(1);
+          const isArray = flags.includes("a");
+          const isStruct = flags.includes("s");
+          const isBytes20 = flags.includes("b20");
+          const isAddress = flags.includes("addr");
+          let commitmentType = null;
+          if (isBytes20) {
+            commitmentType = "bytes20";
+          } else if (isAddress) {
+            commitmentType = "address";
           }
           const plainText = decrypt(
             cipherText,
@@ -962,7 +982,7 @@ const prepareBackupDataRetriever = (node: any) => {
           if (isStruct){
             value = {};
             let count = isArray ? 3 : 2;
-            for (const prop of structProperties.split(" ")) {
+            for (const prop of structProperties?.split(" ").filter(Boolean) || []) {
               value[prop] = plainText[count];
               count++;
             }
@@ -1026,6 +1046,8 @@ const prepareBackupDataRetriever = (node: any) => {
             hash: newCommitment,
             name: name,
             mappingKey: mappingKey?.integer,
+            type: commitmentType,
+            typeNames: structTypeNames,
             preimage: {
               stateVarId: stateVarId,
               value: value,

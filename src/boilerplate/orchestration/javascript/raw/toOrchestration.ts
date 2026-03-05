@@ -505,12 +505,25 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
-      if (node.msgValueParam)
-        lines.push(`
-              \nconst msgValue = 1;`);
-              else
-              lines.push(`
-              \nconst msgValue = 0;`);  
+      if (node.msgValueParam) lines.push(`\nconst msgValue = 1;`);
+      else lines.push(`\nconst msgValue = 0;`);
+      node.parameters.parameters.forEach((paramNode: any) => {
+        if (paramNode?.typeName?.name === 'bytes20') {
+          const paramName = paramNode.name;
+          lines.push(`
+            if (typeof _${paramName} === "string") {
+              if (_${paramName}.startsWith("0x")) {
+                const ${paramName}_hex = _${paramName}.slice(2);
+                if (${paramName}_hex.length > 40) {
+                  throw new Error("Invalid bytes20 input '${paramName}': hex string exceeds 20 bytes.");
+                }
+              } else if (Buffer.byteLength(_${paramName}, "utf8") > 20) {
+                throw new Error("Invalid bytes20 input '${paramName}': string exceeds 20 bytes.");
+              }
+            }
+          `);
+        }
+      });
       node.inputParameters.forEach((param: string) => {
         lines.push(`\nlet ${param} = generalise(_${param});`);
         lines.push(`\nconst ${param}_init = generalise(_${param});`);
@@ -669,6 +682,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'decrement',
+                    valueType: stateNode.valueType,
                     isSharedSecret: stateNode.isSharedSecret,
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
@@ -687,6 +701,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
+                    valueType: stateNode.valueType,
                     isSharedSecret: stateNode.isSharedSecret,
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
@@ -707,6 +722,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
+                valueType: stateNode.valueType,
                 isSharedSecret: stateNode.isSharedSecret,
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
@@ -950,6 +966,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.encryptBackupPreimage.postStatements( {
               stateName,
               stateType,
+              valueType: stateNode.valueType,
               structProperties: stateNode.structProperties,
               encryptionRequired: stateNode.encryptionRequired,
               mappingName: stateNode.mappingName || stateName,
