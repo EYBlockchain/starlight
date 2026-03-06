@@ -76,6 +76,9 @@ export default class MappingKey {
   owner: any = null; // object of objects, indexed by node id.
   encryptionRequired?: boolean;
 
+  // Domain parameters (per keyword)
+  perParameters?: Array<{type: string, name: string}>;
+
   returnKeyName(keyNode: any) {
     if (this.keyPath.isMsgSender(keyNode)) return 'msgSender';
     if (this.keyPath.isMsgValue(keyNode)) return 'msgValue';
@@ -112,6 +115,9 @@ export default class MappingKey {
     this.isMsgSender = keyPath.isMsg(); // used for finding owner
     this.isSecret = container.isSecret;
     this.isSharedSecret = container.isSharedSecret;
+
+    // Initialize domain parameters from container
+    this.perParameters = container.perParameters ?? [];
 
     this.isMapping = container.isMapping;
     this.isStruct = container.isStruct; // keyPath.isStruct();
