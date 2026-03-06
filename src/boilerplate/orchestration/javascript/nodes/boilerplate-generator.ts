@@ -38,6 +38,17 @@ const getPrivateStateValueType = (
   return null;
 };
 
+const getStructPropertyNames = (indicator: any): string[] | null => {
+  if (!indicator?.isStruct) return null;
+
+  const declaredMembers =
+    indicator?.referencingPaths?.[0]?.getStructDeclaration?.()?.members;
+  if (declaredMembers?.length) return declaredMembers.map((member: any) => member.name);
+
+  const discoveredMembers = Object.keys(indicator?.structProperties || {});
+  return discoveredMembers.length ? discoveredMembers : null;
+};
+
 /**
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
@@ -52,7 +63,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: getStructPropertyNames(indicator),
       };
     }
     case 'ReadPreimage': {
@@ -70,7 +81,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -98,7 +109,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -130,9 +141,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct
-          ? Object.keys(indicator.structProperties)
-          : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingName: indicator.isMapping ? indicator.node?.name : null,
       };
     }
@@ -152,7 +161,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingName: indicator.isMapping ? indicator.node?.name : null,
       };
     }
@@ -176,7 +185,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -198,7 +207,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         indicator = {},
         localMappingKey,
       } = fields;
-      const structProperties = !indicator.isStruct ? null : indicator.isAccessed ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : Object.keys(indicator.structProperties);
+      const structProperties = getStructPropertyNames(indicator);
       return {
         privateStateName,
         stateVarId: id,
@@ -238,7 +247,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         encryptionRequired: indicator.encryptionRequired,
@@ -280,7 +289,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         encryptionRequired: indicator.encryptionRequired,
