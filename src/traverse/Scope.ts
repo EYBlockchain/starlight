@@ -427,7 +427,14 @@ export class Scope {
         ? indicator.structProperties[memberAccessNode.memberName]
         : indicator;
     }
-    if ((path.isConstantArray(referencingNode) || referencingNode.memberName === 'length') && !NodePath.getPath(referencingNode).getAncestorOfType('IndexAccess')) return indicator;
+    const referencingPath = NodePath.getPath(referencingNode);
+    const hasIndexAccessAncestor = referencingPath?.getAncestorOfType('IndexAccess');
+    if (
+      (path.isArray(referencingNode) ||
+        referencingNode.memberName === 'length') &&
+      !hasIndexAccessAncestor
+    )
+      return indicator;
     // getMappingKeyName requires an indexAccessNode - referencingNode may be a baseExpression or indexExpression contained Identifier
     const indexAccessNode =
       referencingNode.nodeType === 'IndexAccess'
