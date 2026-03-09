@@ -10,6 +10,32 @@
 import { TODOError, ZKPError, ParseError } from '../../../error/errors.js';
 import { traverseNodesFast } from '../../../traverse/traverse.js';
 
+const disallowedVariableNames = new Set([
+  'key',
+  'secretKey',
+  'publicKey',
+  'sharedSecretKey',
+  'sharedPublicKey',
+  'keys',
+  'instance',
+  'contractAddr',
+  'web3',
+  'BackupData',
+  'msgSender',
+  'msgValue',
+  'allInputs',
+  'res',
+  'proof',
+  'txData',
+  'txParams',
+  'tx',
+  'signed',
+  'sendTxn',
+  'encEvent',
+  'encBackupEvent',
+  'publicReturns',
+]);
+
 
 export default {
   StructuredDocumentation: {
@@ -92,14 +118,16 @@ export default {
 
   VariableDeclaration: {
     enter(node: any) {
-      if (node.name.startsWith('_') && node.isSecret)
+      const variableName = node.name || '';
+
+      if (variableName.startsWith('_') && node.isSecret)
         throw new ZKPError(
           `Zokrates does not support variables that begin with an underscore such as as _value.`,
           node,
         );
-      if (node.name === 'key'){
+      if (disallowedVariableNames.has(variableName)) {
         throw new ZKPError(
-          `Zokrates does not support variables with the name key, please choose a different name.`,
+          `Zokrates does not support variables with the name ${variableName}, please choose a different name.`,
           node,
         );
       }
