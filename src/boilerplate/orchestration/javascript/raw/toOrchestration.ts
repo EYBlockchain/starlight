@@ -989,7 +989,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input.name}_init.all.integer`);
           } else if(input.isBool) {
             lines.push(`parseInt(${input.name}_init.integer, 10)`);
-          } else if(input.isAddress) {
+          } else if(input.isAddress || input.isBytes20) {
             lines.push(`${input.name}_init.hex(20)`);
           }
           else {
@@ -1027,7 +1027,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               publicInputs.push(`${input.name}: ${input.name}.all.integer`);
             } else if(input.isBool) {
               publicInputs.push(`${input.name}: parseInt(${input.name}.integer, 10)`);
-            } else if(input.isAddress) {
+            } else if(input.isAddress || input.isBytes20) {
               publicInputs.push(`${input.name}: ${input.name}.hex(20)`);
             }
             else {
@@ -1122,10 +1122,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               lines.push(`${input.name}: ${input.name}.all.integer`);
             } else if(input.isBool) {
               lines.push(`${input.name}: parseInt(${input.name}.integer, 10)`);
-            } else if(input.isAddress) {
+            } else if(input.isAddress || input.isBytes20) {
               lines.push(`${input.name}: ${input.name}.hex(20)`);
-            }
-            else {
+            } else {
               lines.push(`${input}: ${input}.integer`);
             }           
           });
@@ -1150,10 +1149,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input.name}.all.integer`);
           } else if(input.isBool) {
             lines.push(`parseInt(${input.name}.integer, 10)`);
-          } else if(input.isAddress) {
+          } else if(input.isAddress || input.isBytes20) {
             lines.push(`${input.name}.hex(20)`);
-          }
-          else {
+          } else {
             lines.push(`${input}.integer`);
           }           
         });
