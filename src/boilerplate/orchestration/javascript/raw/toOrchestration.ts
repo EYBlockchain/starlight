@@ -549,9 +549,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       });
       const decStates = node.decrementedSecretStates;
       const incStates = node.incrementedSecretStates;
-      let returnParameterNames = node.returnParameters.parameters
-        .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
-          .map(paramnode => (paramnode.name)) || [];
+      const returnParameterNames =
+        node.returnParameters.parameters
+          .filter(
+            (paramnode: any) =>
+              paramnode.isSecret ||
+              (paramnode.typeName.name === 'bool' &&
+                (paramnode.name === 'true' || paramnode.name === 'false')),
+          )
+          .map(paramnode => paramnode.name) || [];
       returnParameterNames.forEach( (param, index) => {
         if(decStates) {
           if(decStates?.includes(param)){
