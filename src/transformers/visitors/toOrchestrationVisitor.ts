@@ -612,6 +612,7 @@ const visitor = {
           isConstantArray?: boolean;
           isBool?: boolean;
           isAddress?: boolean;
+          isBytes20?: boolean;
         }
         let isReadOnly = false;
         if (node.stateMutability === 'view'){
@@ -627,7 +628,7 @@ const visitor = {
         });
         node.parameters.parameters.forEach((para: { isSecret: any; typeName: { name: string; }; name: any; _newASTPointer: { typeName: { properties: any[]; }; }; }) => {
           if (!para.isSecret) {
-            if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool') || (para.typeName && para.typeName.name === 'address')) {
+            if (path.isStructDeclaration(para) || path.isConstantArray(para) || (para.typeName && para.typeName.name === 'bool') || (para.typeName && para.typeName.name === 'address') || (para.typeName && para.typeName.name === 'bytes20')) {
               let newParam: PublicParam = { name: para.name };
               if (path.isStructDeclaration(para)) {
                 newParam.properties = para._newASTPointer.typeName.properties.map(p => ({ "name": p.name, "type": p.type }));
@@ -640,6 +641,9 @@ const visitor = {
               } 
               if (para.typeName?.name === 'address') {
                 newParam.isAddress = true;
+              }
+              if (para.typeName?.name === 'bytes20') {
+                newParam.isBytes20 = true;
               }
               sendPublicTransactionNode.publicInputs.push(newParam);
             } else {
@@ -672,8 +676,18 @@ const visitor = {
           if(indicators.isMapping) {
             for(const [name, mappingKey ] of Object.entries(indicators.mappingKeys)){ 
               if(mappingKey.encryptionRequired) {
+                if (mappingKey.isStruct) console.log("Object.keys(mappingKey.structProperties)", Object.keys(mappingKey.structProperties));
                 mappingKey.isStruct ? 
-                file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, isStruct: true, structProperty: Object.keys(mappingKey.structProperties), id: mappingKey.node.referencedDeclaration}) :
+                file.nodes?.[0].stateVariables.push( {
+                  name: indicators.name,
+                  isMapping: true,
+                  mappingKey: name,
+                  isStruct: true,
+                  structProperty:
+                    mappingKey.referencingPaths?.[0]?.getStructDeclaration()?.members.map((m: any) => m.name)
+                    || Object.keys(mappingKey.structProperties),
+                  id: mappingKey.node.referencedDeclaration
+                }) :
                 
                 file.nodes?.[0].stateVariables.push( {name: indicators.name, isMapping: true, mappingKey: name, id: mappingKey.node.referencedDeclaration});
             }
@@ -1019,13 +1033,14 @@ const visitor = {
         // this adds other values we need in the tx
         for (const param of node.parameters.parameters) {
           if (!param.isSecret) {
-            if (path.isStructDeclaration(param) || path.isConstantArray(param)  ||( param.typeName && param.typeName.name === 'bool') || ( param.typeName && param.typeName.name === 'address')) {
+            if (path.isStructDeclaration(param) || path.isConstantArray(param)  ||( param.typeName && param.typeName.name === 'bool') || ( param.typeName && param.typeName.name === 'address') || ( param.typeName && param.typeName.name === 'bytes20')) {
               let newParam: any = {};
               newParam.name = param.name;
               if (path.isStructDeclaration(param)) newParam.properties = param._newASTPointer.typeName.properties.map(p => ({"name" : p.name, "type" : p.type }));
               if (path.isConstantArray(param)) newParam.isConstantArray = true;
               if (param.typeName?.name === 'bool') newParam.isBool = true;
               if (param.typeName?.name === 'address') newParam.isAddress = true;
+              if (param.typeName?.name === 'bytes20') newParam.isBytes20 = true;
               newNodes.sendTransactionNode.publicInputs.push(newParam);
             } else newNodes.sendTransactionNode.publicInputs.push(param.name);
           }

@@ -1,0 +1,111 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract Bytes20 {
+
+  secret bytes20 private secretWholeA;
+  secret bytes20 private secretWholeB;
+  bytes20 public publicWholeA;
+  bytes20 public publicWholeB;
+
+  secret bool isEqual;
+
+  secret mapping(uint256 => bytes20) private secretById;
+  mapping(uint256 => bytes20) public publicById;
+
+  secret mapping(bytes20 => uint256) private secretCountByKey;
+  mapping(bytes20 => uint256) public publicCountByKey;
+
+  struct RefRecord {
+    bytes20 ref;
+    uint256 tag;
+  }
+
+  secret RefRecord private secretRecord;
+  secret uint256 exampleTag;
+  RefRecord public publicRecord;
+  secret mapping(uint256 => RefRecord) private secretRecordById;
+  mapping(uint256 => RefRecord) public publicRecordById;
+
+  secret bytes20[] private secretRefs;
+  bytes20[] public publicRefs;
+  bytes20[4] public fixedPublicRefs;
+
+
+  function setWhole(
+    secret bytes20 newSecretA,
+    secret bytes20 newSecretB,
+    bytes20 newPublicA,
+    bytes20 newPublicB
+  ) public {
+    secretWholeA = newSecretA;
+    secretWholeB = newSecretB;
+    publicWholeA = newPublicA;
+    publicWholeB = newPublicB;
+    isEqual = secretWholeA == secretWholeB;
+  }
+
+
+  function setMapped(
+    secret uint256 secretId,
+    uint256 publicId,
+    secret bytes20 newSecretValue,
+    bytes20 newPublicValue
+  ) public {
+    secretById[secretId] = newSecretValue;
+    publicById[publicId] = newPublicValue;
+  }
+
+  function setByBytesKey(
+    secret bytes20 bytesKey,
+    bytes20 bytesKeyPublic,
+    secret uint256 secretCount,
+    uint256 publicCount
+  ) public {
+    secretCountByKey[bytesKey] = secretCount;
+    publicCountByKey[bytesKeyPublic] = publicCount;
+  }
+
+  function setStructData(
+    secret bytes20 secretRef,
+    bytes20 publicRef,
+    secret uint256 secretId,
+    uint256 publicId
+  ) public {
+    secretRecord.ref = secretRef;
+    secretRecord.tag += 1;
+
+    publicRecord.ref = publicRef;
+    publicRecord.tag += 1;
+
+    secretRecordById[secretId].ref = secretRef;
+    secretRecordById[secretId].tag += 1;
+
+    publicRecordById[publicId].ref = publicRef;
+    publicRecordById[publicId].tag += 1;
+  }
+
+  function setArrayData(
+    secret uint256 secretIndex,
+    secret bytes20 secretValue,
+    bytes20 publicValue
+  ) public {
+    secretRefs[secretIndex] = secretValue;
+    publicRefs.push(publicValue);
+    fixedPublicRefs[0] = publicValue;
+  }
+
+  function setViaLocal(secret bytes20 inputSecret, bytes20 inputPublic) public returns (bool) {
+    secret bytes20 localSecret = inputSecret;
+    bytes20 localPublic = inputPublic;
+    secretWholeA = localSecret;
+    publicWholeA = localPublic;
+    return true;
+  }
+
+  function equalsPublic(bytes20 expected) public view returns (bool) {
+    bool comparison = (publicWholeA == expected);
+    return comparison;
+  }
+}

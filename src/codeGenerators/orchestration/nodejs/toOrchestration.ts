@@ -66,7 +66,12 @@ export default function codeGenerator(node: any, options: any = {}): any {
       }
       if (!node.interactsWithSecret)
         return `\n// non-secret line would go here but has been filtered out`;
-      if (node.initialValue?.nodeType === 'Assignment') {
+      const isAssignment = node.initialValue?.nodeType === 'Assignment';
+      const isStructPropertyAssignment =
+        isAssignment &&
+        node.declarations[0].isStruct &&
+        node.initialValue.leftHandSide?.nodeType === 'MemberAccess';
+      if (isAssignment && !isStructPropertyAssignment) {
         if (node.declarations[0].isAccessed && node.declarations[0].isSecret) {
           let varName = node.initialValue.leftHandSide?.name ? node.initialValue.leftHandSide.name : node.declarations[0].name;
           return `${getAccessedValue(
@@ -79,6 +84,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
         return `${getPublicValue(node.declarations[0])}`
       } else if (node.declarations[0].isAccessed) {
         return `${getAccessedValue(node.declarations[0].name)}`;
+      } else if (isStructPropertyAssignment) {
+        return `${getAccessedValue(node.declarations[0].name)}\n ${codeGenerator(node.initialValue)};`;
       }
       if (!node.initialValue && !node.declarations[0].isAccessed) return `\nlet ${codeGenerator(node.declarations[0])};`;
       if (node.initialValue &&
@@ -271,6 +278,8 @@ export default function codeGenerator(node: any, options: any = {}): any {
           return `!(parseInt(${node.name}.integer, 10) === 0)`;
         case 'address':
           if (options?.contractCall) return `${node.name}.hex(20)`
+          return `${node.name}.integer`;
+        case 'bytes20':
           return `${node.name}.integer`;
         case 'generalNumber':
           return `generalise(${node.name})`;

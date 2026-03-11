@@ -505,12 +505,25 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       if (node.msgSenderParam)
         lines.push(`
               \nconst msgSender = generalise(config.web3.options.defaultAccount);`);
-      if (node.msgValueParam)
-        lines.push(`
-              \nconst msgValue = 1;`);
-              else
-              lines.push(`
-              \nconst msgValue = 0;`);  
+      if (node.msgValueParam) lines.push(`\nconst msgValue = 1;`);
+      else lines.push(`\nconst msgValue = 0;`);
+      node.parameters.parameters.forEach((paramNode: any) => {
+        if (paramNode?.typeName?.name === 'bytes20') {
+          const paramName = paramNode.name;
+          lines.push(`
+            if (typeof _${paramName} === "string") {
+              if (_${paramName}.startsWith("0x")) {
+                const ${paramName}_hex = _${paramName}.slice(2);
+                if (${paramName}_hex.length > 40) {
+                  throw new Error("Invalid bytes20 input '${paramName}': hex string exceeds 20 bytes.");
+                }
+              } else if (Buffer.byteLength(_${paramName}, "utf8") > 20) {
+                throw new Error("Invalid bytes20 input '${paramName}': string exceeds 20 bytes.");
+              }
+            }
+          `);
+        }
+      });
       node.inputParameters.forEach((param: string) => {
         lines.push(`\nlet ${param} = generalise(_${param});`);
         lines.push(`\nconst ${param}_init = generalise(_${param});`);
@@ -536,9 +549,15 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       });
       const decStates = node.decrementedSecretStates;
       const incStates = node.incrementedSecretStates;
-      let returnParameterNames = node.returnParameters.parameters
-        .filter((paramnode: any) => (paramnode.isSecret || paramnode.typeName.name === 'bool'))
-          .map(paramnode => (paramnode.name)) || [];
+      const returnParameterNames =
+        node.returnParameters.parameters
+          .filter(
+            (paramnode: any) =>
+              paramnode.isSecret ||
+              (paramnode.typeName.name === 'bool' &&
+                (paramnode.name === 'true' || paramnode.name === 'false')),
+          )
+          .map(paramnode => paramnode.name) || [];
       returnParameterNames.forEach( (param, index) => {
         if(decStates) {
           if(decStates?.includes(param)){
@@ -669,6 +688,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                   Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'decrement',
+                    valueType: stateNode.valueType,
                     isSharedSecret: stateNode.isSharedSecret,
                     mappingName: stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
@@ -687,6 +707,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                     Orchestrationbp.writePreimage.postStatements({
                     stateName,
                     stateType: 'increment',
+                    valueType: stateNode.valueType,
                     isSharedSecret: stateNode.isSharedSecret,
                     mappingName:stateNode.mappingName || stateName,
                     mappingKey: stateNode.mappingKey
@@ -707,6 +728,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
                 Orchestrationbp.writePreimage.postStatements({
                 stateName,
                 stateType: 'whole',
+                valueType: stateNode.valueType,
                 isSharedSecret: stateNode.isSharedSecret,
                 mappingName: stateNode.mappingName || stateName,
                 mappingKey: stateNode.mappingKey
@@ -950,6 +972,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             Orchestrationbp.encryptBackupPreimage.postStatements( {
               stateName,
               stateType,
+              valueType: stateNode.valueType,
               structProperties: stateNode.structProperties,
               encryptionRequired: stateNode.encryptionRequired,
               mappingName: stateNode.mappingName || stateName,
@@ -972,7 +995,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input.name}_init.all.integer`);
           } else if(input.isBool) {
             lines.push(`parseInt(${input.name}_init.integer, 10)`);
-          } else if(input.isAddress) {
+          } else if(input.isAddress || input.isBytes20) {
             lines.push(`${input.name}_init.hex(20)`);
           }
           else {
@@ -1010,7 +1033,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               publicInputs.push(`${input.name}: ${input.name}.all.integer`);
             } else if(input.isBool) {
               publicInputs.push(`${input.name}: parseInt(${input.name}.integer, 10)`);
-            } else if(input.isAddress) {
+            } else if(input.isAddress || input.isBytes20) {
               publicInputs.push(`${input.name}: ${input.name}.hex(20)`);
             }
             else {
@@ -1105,10 +1128,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
               lines.push(`${input.name}: ${input.name}.all.integer`);
             } else if(input.isBool) {
               lines.push(`${input.name}: parseInt(${input.name}.integer, 10)`);
-            } else if(input.isAddress) {
+            } else if(input.isAddress || input.isBytes20) {
               lines.push(`${input.name}: ${input.name}.hex(20)`);
-            }
-            else {
+            } else {
               lines.push(`${input}: ${input}.integer`);
             }           
           });
@@ -1133,10 +1155,9 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             lines.push(`${input.name}.all.integer`);
           } else if(input.isBool) {
             lines.push(`parseInt(${input.name}.integer, 10)`);
-          } else if(input.isAddress) {
+          } else if(input.isAddress || input.isBytes20) {
             lines.push(`${input.name}.hex(20)`);
-          }
-          else {
+          } else {
             lines.push(`${input}.integer`);
           }           
         });

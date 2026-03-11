@@ -15,6 +15,9 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
+const parseAddressValue = value => BigInt(value);
+const expectedSenderAddress = 1390849295786071768276380950238675083608645509734n;
+
 const testedZapps = [];
 const zappLogs = new Map(); // Store logs for each zapp
 const displayedZapps = new Set(); // Track which ZApps have already had logs displayed
@@ -1264,20 +1267,20 @@ describe('NFT_Escrow Zapp', () => {
   });
   it('Check values of commitment', async () => {
     expect(
-      parseInt(res.NFT_Escrow[8].body.commitments[0].preimage.value, 10),
-    ).to.equal(1390849295786071768276380950238675083608645509734);
+      parseAddressValue(res.NFT_Escrow[8].body.commitments[0].preimage.value),
+    ).to.equal(expectedSenderAddress);
     expect(
-      parseInt(res.NFT_Escrow[8].body.commitments[1].preimage.value, 10),
-    ).to.equal(235);
+      parseAddressValue(res.NFT_Escrow[8].body.commitments[1].preimage.value),
+    ).to.equal(235n);
     expect(
-      parseInt(res.NFT_Escrow[9].body.commitments[0].preimage.value, 10),
-    ).to.equal(1390849295786071768276380950238675083608645509734);
+      parseAddressValue(res.NFT_Escrow[9].body.commitments[0].preimage.value),
+    ).to.equal(expectedSenderAddress);
     expect(
-      parseInt(res.NFT_Escrow[10].body.commitments[0].preimage.value, 10),
-    ).to.equal(1390849295786071768276380950238675083608645509734);
+      parseAddressValue(res.NFT_Escrow[10].body.commitments[0].preimage.value),
+    ).to.equal(expectedSenderAddress);
     expect(
-      parseInt(res.NFT_Escrow[10].body.commitments[1].preimage.value, 10),
-    ).to.equal(578);
+      parseAddressValue(res.NFT_Escrow[10].body.commitments[1].preimage.value),
+    ).to.equal(578n);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     expect(res.NFT_Escrow[12].body.commitments.length).to.equal(6);
@@ -1461,21 +1464,21 @@ describe('Swap Zapp', () => {
       parseInt(res.Swap[6].body.commitments[4].preimage.value, 10),
     ).to.equal(170); // startSwap balance: 200-30
     expect(res.Swap[6].body.commitments[6].name).to.equal("swapProposals");
-    expect(res.Swap[6].body.commitments[6].preimage.value).to.deep.equal({
-      swapAmountSent: '30',
-      swapTokenSent: '1',
-      swapTokenRecieved: '2',
-      swapInitiator: '1390849295786071768276380950238675083608645509734',
-      pendingStatus: '1',
-    });
+    expect(res.Swap[6].body.commitments[6].preimage.value.swapAmountSent).to.equal('30');
+    expect(res.Swap[6].body.commitments[6].preimage.value.swapTokenSent).to.equal('1');
+    expect(res.Swap[6].body.commitments[6].preimage.value.swapTokenRecieved).to.equal('2');
+    expect(
+      parseAddressValue(res.Swap[6].body.commitments[6].preimage.value.swapInitiator),
+    ).to.equal(expectedSenderAddress);
+    expect(res.Swap[6].body.commitments[6].preimage.value.pendingStatus).to.equal('1');
     expect(res.Swap[6].body.commitments[10].name).to.equal("swapProposals");
-    expect(res.Swap[6].body.commitments[10].preimage.value).to.deep.equal({
-      swapAmountSent: '0',
-      swapTokenSent: '1',
-      swapTokenRecieved: '2',
-      swapInitiator: '1390849295786071768276380950238675083608645509734',
-      pendingStatus: '0',
-    });
+    expect(res.Swap[6].body.commitments[10].preimage.value.swapAmountSent).to.equal('0');
+    expect(res.Swap[6].body.commitments[10].preimage.value.swapTokenSent).to.equal('1');
+    expect(res.Swap[6].body.commitments[10].preimage.value.swapTokenRecieved).to.equal('2');
+    expect(
+      parseAddressValue(res.Swap[6].body.commitments[10].preimage.value.swapInitiator),
+    ).to.equal(expectedSenderAddress);
+    expect(res.Swap[6].body.commitments[10].preimage.value.pendingStatus).to.equal('0');
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     // Note the order of the commitments has changed because some are decrypted with the shared secret key
@@ -1502,20 +1505,20 @@ describe('Swap Zapp', () => {
       parseInt(res.Swap[8].body.commitments[4].preimage.value, 10),
     ).to.equal(170); // startSwap balance: 200-30
     expect(res.Swap[8].body.commitments[9].name).to.equal("swapProposals");
-    expect(res.Swap[8].body.commitments[9].preimage.value).to.deep.equal({
-      swapAmountSent: '30',
-      swapTokenSent: '1',
-      swapTokenRecieved: '2',
-      swapInitiator: '1390849295786071768276380950238675083608645509734',
-      pendingStatus: '1',
-    });
+    expect(res.Swap[8].body.commitments[9].preimage.value.swapAmountSent).to.equal('30');
+    expect(res.Swap[8].body.commitments[9].preimage.value.swapTokenSent).to.equal('1');
+    expect(res.Swap[8].body.commitments[9].preimage.value.swapTokenRecieved).to.equal('2');
+    expect(
+      parseAddressValue(res.Swap[8].body.commitments[9].preimage.value.swapInitiator),
+    ).to.equal(expectedSenderAddress);
+    expect(res.Swap[8].body.commitments[9].preimage.value.pendingStatus).to.equal('1');
     expect(res.Swap[8].body.commitments[10].name).to.equal("swapProposals");
-    expect(res.Swap[8].body.commitments[10].preimage.value).to.deep.equal({
-      swapAmountSent: '0',
-      swapTokenSent: '1',
-      swapTokenRecieved: '2',
-      swapInitiator: '1390849295786071768276380950238675083608645509734',
-      pendingStatus: '0',
-    });
+    expect(res.Swap[8].body.commitments[10].preimage.value.swapAmountSent).to.equal('0');
+    expect(res.Swap[8].body.commitments[10].preimage.value.swapTokenSent).to.equal('1');
+    expect(res.Swap[8].body.commitments[10].preimage.value.swapTokenRecieved).to.equal('2');
+    expect(
+      parseAddressValue(res.Swap[8].body.commitments[10].preimage.value.swapInitiator),
+    ).to.equal(expectedSenderAddress);
+    expect(res.Swap[8].body.commitments[10].preimage.value.pendingStatus).to.equal('0');
   });
 });

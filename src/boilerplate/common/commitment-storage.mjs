@@ -21,35 +21,83 @@ const { generalise } = gen;
 const keyDb =
   process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
 
-export function formatCommitment (commitment) {
-  let data
+const PRINTABLE_ASCII_REGEX = /^[\x20-\x7E]*$/;
+
+const formatPreimageValue = (rawValue, typeName = null) => {
+  const generalisedValue = generalise(rawValue);
+  if (typeName === 'bytes20') {
+    const asciiValue = generalisedValue.all
+      ? generalisedValue.all.ascii
+      : generalisedValue.ascii;
+    if (
+      typeof asciiValue === 'string' &&
+      PRINTABLE_ASCII_REGEX.test(asciiValue)
+    ) {
+      return asciiValue;
+    }
+    return generalisedValue.all
+      ? generalisedValue.all.hex(20)
+      : generalisedValue.hex(20);
+  }
+  if (typeName === 'address') {
+    return generalisedValue.all
+      ? generalisedValue.all.hex(32)
+      : generalisedValue.hex(32);
+  }
+  return generalisedValue.all
+    ? generalisedValue.all.integer
+    : generalisedValue.integer;
+};
+
+export function formatCommitment(commitment) {
+  let data;
   try {
     const nullifierHash = commitment.secretKey
       ? poseidonHash([
-        BigInt(commitment.preimage.stateVarId.hex(32)),
-        BigInt(commitment.secretKey.hex(32)),
-        BigInt(commitment.preimage.salt.hex(32))
-      ])
-      : ''
-    const preimage = generalise(commitment.preimage).all.hex(32)
-    preimage.value = generalise(commitment.preimage.value).all
-      ? generalise(commitment.preimage.value).all.integer
-      : generalise(commitment.preimage.value).integer
+          BigInt(commitment.preimage.stateVarId.hex(32)),
+          BigInt(commitment.secretKey.hex(32)),
+          BigInt(commitment.preimage.salt.hex(32)),
+        ])
+      : '';
+    const preimage = generalise(commitment.preimage).all.hex(32);
+    if (
+      Array.isArray(commitment.typeNames) &&
+      commitment.typeNames.length > 0
+    ) {
+      preimage.value = {};
+      const rawStructValue = commitment.preimage.value || {};
+      const structKeys = Object.keys(rawStructValue);
+      structKeys.forEach((propertyName, index) => {
+        preimage.value[propertyName] = formatPreimageValue(
+          rawStructValue[propertyName],
+          commitment.typeNames[index],
+        );
+      });
+    } else {
+      preimage.value = formatPreimageValue(
+        commitment.preimage.value,
+        commitment.type,
+      );
+    }
     data = {
       _id: commitment.hash.hex(32),
       name: commitment.name,
       source: commitment.source,
+      type: commitment.type ?? null,
+      typeNames: Array.isArray(commitment.typeNames)
+        ? commitment.typeNames
+        : null,
       mappingKey: commitment.mappingKey ? commitment.mappingKey : null,
       secretKey: commitment.secretKey ? commitment.secretKey.hex(32) : null,
       preimage,
       isNullified: commitment.isNullified,
-      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null
-    }
-    logger.debug(`Storing commitment ${data._id}`)
+      nullifier: commitment.secretKey ? nullifierHash.hex(32) : null,
+    };
+    logger.debug(`Storing commitment ${data._id}`);
   } catch (error) {
-    console.error('Error --->', error)
+    console.error('Error --->', error);
   }
-  return data
+  return data;
 }
 
 export async function persistCommitment (data) {
