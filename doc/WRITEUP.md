@@ -519,7 +519,7 @@ myMapping[key] = value, is stored at storage slot `hash( key, id )`
 
 #### zApps' commitment structures
 
-For our current phase of work, we support `uint256` and `address` basic types, `structs`, `arrays`, and `mapping` (including mappings to structs).
+For our current phase of work, we support `uint256`, `bool`, `address`, and `bytes20` basic types, plus `structs`, `arrays`, and `mapping` (including mappings to structs).
 
 Consider this incomplete `.zol` contract:
 
