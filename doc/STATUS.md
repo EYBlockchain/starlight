@@ -70,7 +70,8 @@ Here we summarise the as of yet unsupported Solidity syntax.
   - Conditions like `if(a)` or `if(flag)` are not supported. Use explicit comparisons, e.g., `if(a == true)`.
 - **Logical expressions with mixed `&&` and `||` operators:**
   - Nested logical operators without brackets (e.g., `if(a && b || c)`) are not supported. Use brackets to clarify logic, e.g., `if((a && b) || c)`.
-- **Secret variables named `key` or starting with `_`:**
-  - Zokrates does not support secret variables named `key` or starting with an underscore (e.g., `_value`).
+- **Variables with reserved names, and secret variables starting with `_`:**
+  - Zokrates does not support variables with these names: `key`, `secretKey`, `publicKey`, `sharedSecretKey`, `sharedPublicKey`, `keys`, `instance`, `contractAddr`, `web3`, `BackupData`, `msgSender`, `msgValue`, `allInputs`, `res`, `proof`, `txData`, `txParams`, `tx`, `signed`, `sendTxn`, `encEvent`, `encBackupEvent`, `publicReturns`.
+  - Zokrates also does not support secret variables starting with an underscore (e.g., `_value`).
 - **Other limitations:**
   - The compiler will throw errors for unsupported patterns, often with suggestions for workarounds.
