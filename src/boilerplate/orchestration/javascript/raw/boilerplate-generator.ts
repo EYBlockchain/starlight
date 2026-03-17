@@ -595,7 +595,7 @@ class BoilerplateGenerator {
 
 encryptBackupPreimage = {
 
-  postStatements({ stateName, stateType, structProperties, encryptionRequired, mappingName, mappingKey }): string[] {
+  postStatements({ stateName, stateType, valueType, structProperties, encryptionRequired, mappingName, mappingKey }): string[] {
     let valueName = '';
     let saltName = '';
     switch (stateType) {
@@ -631,11 +631,17 @@ encryptBackupPreimage = {
       plainText = `[BigInt(${saltName}.hex(32)), BigInt(${stateName}_stateVarId),
         ${valueName}]`;
     }
+    if (valueType === 'bytes20') varName += ` b20`;
+    if (valueType === 'address') varName += ` addr`;
     if (structProperties) varName += ` s`;
     if (stateType === 'increment') varName += ` u`;
     if (structProperties) {
       varName += ` props:`;
       varName += ` ${structProperties.join(' ')}`;
+      if (Array.isArray(valueType) && valueType.length > 0) {
+        varName += ` types:`;
+        varName += ` ${valueType.join(' ')}`;
+      }
     } 
     return[`\n\n// Encrypt pre-image for state variable ${stateName} as a backup: \n 
     let ${stateName}_ephSecretKey = generalise(utils.randomHex(31)); \n 
@@ -671,6 +677,7 @@ sendTransaction = {
     postStatements({
       stateName,
       stateType,
+      valueType,
       isSharedSecret,
       mappingName,
       mappingKey,
@@ -680,6 +687,12 @@ sendTransaction = {
       isConstructor
     }): string[] {
       let value;
+      const commitmentType = !Array.isArray(valueType) && ['bytes20', 'address'].includes(valueType)
+        ? `\n            type: '${valueType}',`
+        : '';
+      const commitmentTypeNames = Array.isArray(valueType) && valueType.length > 0
+        ? `\n            typeNames: [${valueType.map(typeName => `'${typeName}'`).join(', ')}],`
+        : '';
       const errorCatch = `\n console.log("Added commitment", newCommitment.hex(32));
       } catch (e) {
         if (e.toString().includes("E11000 duplicate key")) {
@@ -696,6 +709,8 @@ sendTransaction = {
             hash: ${stateName}_newCommitment,
             name: '${mappingName}',
             mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
+            ${commitmentType}
+            ${commitmentTypeNames}
             preimage: {
               \tstateVarId: generalise(${stateName}_stateVarId),
               \tvalue: ${value},
@@ -715,6 +730,8 @@ sendTransaction = {
               hash: ${stateName}_2_newCommitment,
               name: '${mappingName}',
               mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
+              ${commitmentType}
+              ${commitmentTypeNames}
               preimage: {
                 \tstateVarId: generalise(${stateName}_stateVarId),
                 \tvalue: ${value},
@@ -739,6 +756,8 @@ sendTransaction = {
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
                   mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
+                  ${commitmentType}
+                  ${commitmentTypeNames}
                   preimage: {
                     \tstateVarId: generalise(${stateName}_stateVarId),
                     \tvalue: ${value},

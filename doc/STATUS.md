@@ -24,10 +24,10 @@ Do note that `LoanSimple.zol` don't currently compile - we are actively working 
       - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality.
       - Functions can have any number of secret or public parameters of the types below.
       - Any number of states, secret or public:
-      - Secret states can have types `uint256`, `bool`, `address`, `mapping`, `array` (one dimensional only), `struct`, or mappings to structs (e.g., `mapping(uint256 => MyStruct)`).
-        - Keys of secret mappings can be `uint256` or `address`.
-        - Arrays are only supported with element types `address` or `uint256`.
-        - Structs can only have properties with types `uint256`, `bool` or `address`.
+      - Secret states can have types `uint256`, `bool`, `address`, `bytes20`, `mapping`, `array` (one dimensional only), `struct`, or mappings to structs (e.g., `mapping(uint256 => MyStruct)`).
+        - Keys of secret mappings can be `uint256`, `bytes20` or `address`.
+        - Arrays are only supported with element types `uint256`, `address`, or `bytes20`.
+        - Structs can only have properties with types `uint256`, `bool`, `address`, or `bytes20`.
       - All other types (e.g. `u32`), except for Enums, can be used as long as they aren't secret or interact with secret states. Enums are not supported, even if they are public and don't interact with secret states.
       - Public and secret states *can* interact within functions, but this may break the output zApp or render its privacy useless.
       - Secret states can be *overwritten* on each edit (i.e. they are whole) or *incremented* on each edit (i.e. they are partitioned) - the compiler will work this out for you based on what states are known or unknown to the caller.
@@ -70,7 +70,8 @@ Here we summarise the as of yet unsupported Solidity syntax.
   - Conditions like `if(a)` or `if(flag)` are not supported. Use explicit comparisons, e.g., `if(a == true)`.
 - **Logical expressions with mixed `&&` and `||` operators:**
   - Nested logical operators without brackets (e.g., `if(a && b || c)`) are not supported. Use brackets to clarify logic, e.g., `if((a && b) || c)`.
-- **Secret variables named `key` or starting with `_`:**
-  - Zokrates does not support secret variables named `key` or starting with an underscore (e.g., `_value`).
+- **Variables with reserved names, and secret variables starting with `_`:**
+  - Zokrates does not support variables with these names: `key`, `secretKey`, `publicKey`, `sharedSecretKey`, `sharedPublicKey`, `keys`, `instance`, `contractAddr`, `web3`, `BackupData`, `msgSender`, `msgValue`, `allInputs`, `res`, `proof`, `txData`, `txParams`, `tx`, `signed`, `sendTxn`, `encEvent`, `encBackupEvent`, `publicReturns`.
+  - Zokrates also does not support secret variables starting with an underscore (e.g., `_value`).
 - **Other limitations:**
   - The compiler will throw errors for unsupported patterns, often with suggestions for workarounds.

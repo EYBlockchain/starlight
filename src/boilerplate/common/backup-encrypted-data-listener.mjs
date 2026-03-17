@@ -252,15 +252,25 @@ export default class BackupEncryptedDataEventListener {
             eventData.returnValues.encPreimages[i];
           let { varName } = eventData.returnValues.encPreimages[i];
           const name = varName.split(' ')[0];
-          const structProperties = varName.split('props:')[1]?.trim();
+          const structMetadata = varName.split('props:')[1]?.trim();
+          const structProperties = structMetadata?.split(' types:')[0]?.trim();
+          const structTypeNames =
+            structMetadata
+              ?.split(' types:')[1]
+              ?.trim()
+              ?.split(' ')
+              .filter(Boolean) || null;
           varName = varName.split('props:')[0]?.trim();
-          let isArray = false;
-          let isStruct = false;
-          if (varName.includes(' a')) {
-            isArray = true;
-          }
-          if (varName.includes(' s')) {
-            isStruct = true;
+          const flags = varName.split(' ').slice(1);
+          const isArray = flags.includes('a');
+          const isStruct = flags.includes('s');
+          const isBytes20 = flags.includes('b20');
+          const isAddress = flags.includes('addr');
+          let commitmentType = null;
+          if (isBytes20) {
+            commitmentType = 'bytes20';
+          } else if (isAddress) {
+            commitmentType = 'address';
           }
           const plainText = decrypt(cipherText, kp.secretKey.hex(32), [
             decompressStarlightKey(generalise(ephPublicKey))[0].hex(32),
@@ -299,7 +309,9 @@ export default class BackupEncryptedDataEventListener {
           if (isStruct) {
             value = {};
             count = isArray ? 3 : 2;
-            for (const prop of structProperties.split(' ')) {
+            for (
+              const prop of structProperties?.split(' ').filter(Boolean) || []
+            ) {
               value[prop] = plainText[count];
               count++;
             }
@@ -377,6 +389,8 @@ export default class BackupEncryptedDataEventListener {
               hash: newCommitment,
               name,
               mappingKey: mappingKey?.integer,
+              type: commitmentType,
+              typeNames: structTypeNames,
               preimage: {
                 stateVarId,
                 value,

@@ -38,7 +38,7 @@ export default {
           structDecl.members.forEach((member: any) => {
             const typeStr =
               member.typeName?.name || member.typeDescriptions?.typeString;
-            if (!typeStr || !['bool', 'uint256', 'address'].includes(typeStr)) {
+            if (!typeStr || !['bool', 'uint256', 'address', 'bytes20'].includes(typeStr)) {
               throw new TODOError(
                 `Secret struct with a property ${typeStr} that is not a supported type. See the Status documentation for more details`,
                 node,

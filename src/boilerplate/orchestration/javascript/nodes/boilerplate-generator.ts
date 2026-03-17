@@ -3,6 +3,52 @@ import { StateVariableIndicator } from '../../../../traverse/Indicator.js';
 import MappingKey from '../../../../traverse/MappingKey.js';
 import buildNode from '../../../../types/orchestration-types.js';
 
+const getValueTypeFromTypeName = (typeNameNode: any): string | null => {
+  if (!typeNameNode) return null;
+  if (typeNameNode.nodeType === 'ElementaryTypeName') return typeNameNode.name || null;
+  if (typeNameNode.nodeType === 'Mapping') return getValueTypeFromTypeName(typeNameNode.valueType);
+  if (typeNameNode.nodeType === 'ArrayTypeName') return getValueTypeFromTypeName(typeNameNode.baseType);
+  return null;
+};
+
+const getPrivateStateValueType = (
+  indicator: any,
+  isMapping: boolean,
+  isStruct: boolean,
+): any => {
+  if (isStruct) {
+    const structMembers =
+      indicator?.referencingPaths?.[0]?.getStructDeclaration?.()?.members;
+    if (!structMembers?.length) return [];
+    return structMembers
+      .map((member: any) => getValueTypeFromTypeName(member?.typeName))
+      .filter((memberType: string | null): memberType is string =>
+        Boolean(memberType),
+      );
+  }
+  if (isMapping) {
+    const containerBindingTypeName =
+      indicator?.container?.binding?.path?.node?.typeName;
+    if (containerBindingTypeName)
+      return getValueTypeFromTypeName(containerBindingTypeName);
+  }
+  const bindingTypeName = indicator?.binding?.path?.node?.typeName;
+  if (bindingTypeName) return getValueTypeFromTypeName(bindingTypeName);
+
+  return null;
+};
+
+const getStructPropertyNames = (indicator: any): string[] | null => {
+  if (!indicator?.isStruct) return null;
+
+  const declaredMembers =
+    indicator?.referencingPaths?.[0]?.getStructDeclaration?.()?.members;
+  if (declaredMembers?.length) return declaredMembers.map((member: any) => member.name);
+
+  const discoveredMembers = Object.keys(indicator?.structProperties || {});
+  return discoveredMembers.length ? discoveredMembers : null;
+};
+
 /**
  * @param {string} nodeType - the type of node you'd like to build
  * @param {Object} fields - important key, value pairs to include in the node, and which enable the rest of the node's info to be derived. How do you know which data to include in `fields`? Read this function.
@@ -17,7 +63,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: getStructPropertyNames(indicator),
       };
     }
     case 'ReadPreimage': {
@@ -35,7 +81,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -59,10 +105,11 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         increment,
         stateVarId: id,
+        valueType: getPrivateStateValueType(indicator, indicator.isMapping, indicator.isStruct),
         isSharedSecret: indicator.isSharedSecret,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         nullifierRequired: indicator.isNullified,
@@ -94,9 +141,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct
-          ? Object.keys(indicator.structProperties)
-          : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingName: indicator.isMapping ? indicator.node?.name : null,
       };
     }
@@ -116,7 +161,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         accessedOnly,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? Object.keys(indicator.structProperties) : null,
+        structProperties: getStructPropertyNames(indicator),
         mappingName: indicator.isMapping ? indicator.node?.name : null,
       };
     }
@@ -140,7 +185,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         owner: indicator.isOwned
@@ -162,7 +207,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         indicator = {},
         localMappingKey,
       } = fields;
-      const structProperties = !indicator.isStruct ? null : indicator.isAccessed ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : Object.keys(indicator.structProperties);
+      const structProperties = getStructPropertyNames(indicator);
       return {
         privateStateName,
         stateVarId: id,
@@ -195,13 +240,14 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
       return {
         privateStateName,
         stateVarId: id,
+        valueType: getPrivateStateValueType(indicator, indicator.isMapping, indicator.isStruct),
         increment,
         mappingKey: indicator.isMapping ? indicator.referencedKeyName || indicator.keyPath.node.name : null,
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
         nullifierRequired: indicator.isNullified,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         encryptionRequired: indicator.encryptionRequired,
@@ -243,7 +289,7 @@ export function buildPrivateStateNode(nodeType: string, fields: any = {}): any {
         mappingName: indicator.isMapping ? indicator.node?.name : null,
         isWhole: indicator.isWhole,
         isPartitioned: indicator.isPartitioned,
-        structProperties: indicator.isStruct ? indicator.referencingPaths[0]?.getStructDeclaration()?.members.map(m => m.name) : null,
+        structProperties: getStructPropertyNames(indicator),
         isOwned: indicator.isOwned,
         mappingOwnershipType: indicator.mappingOwnershipType,
         encryptionRequired: indicator.encryptionRequired,
