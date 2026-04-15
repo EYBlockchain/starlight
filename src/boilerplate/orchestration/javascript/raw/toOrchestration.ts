@@ -1095,7 +1095,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \n 	const key = config.web3.key;
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
             \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-            \n  let tx = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
+            \n  let txEvents = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
+            \n  let tx = txEvents.length > 0 ? txEvents : { transactionHash: sendTxn.transactionHash, blockNumber: sendTxn.blockNumber, status: sendTxn.status, gasUsed: sendTxn.gasUsed };
             ${checkLeaves}
             let encEvent = '';
             \n try {
