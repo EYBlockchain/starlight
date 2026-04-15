@@ -545,7 +545,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
         }
       }
     });
-  } else if(constructorParamsIncludesAddr) {
+  } else if (!node.isConstructor && constructorParamsIncludesAddr) {
     // for each address in the shield contract constructor...
     constructorAddrParams.forEach(name => {
       // we have an address input which is likely not a another contract
@@ -558,7 +558,7 @@ const prepareMigrationsFile = (file: localFile, node: any) => {
     });
   }
   if (node.isConstructor) {
-    // we have a constructor which requires a proof
+    // we have a cnstrctr.mjs file
     if (node.functionNames.includes('cnstrctr') || publicConstructorParams.length > 0) {
       customProofImport += `const constructorInput = JSON.parse(
         fs.readFileSync('/app/orchestration/common/db/constructorTx.json', 'utf-8'),
