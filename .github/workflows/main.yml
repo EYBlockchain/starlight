@@ -28,7 +28,7 @@ jobs:
       - name: compile and test
         run: |
           npm i npm@7
-          tsc
+          npx tsc
           npm test
 
       - name: compile shield contracts and circuits
