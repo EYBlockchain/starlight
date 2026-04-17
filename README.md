@@ -254,7 +254,7 @@ contract Swap {
 ---
 #### Example: Using the `re-initisalisable` decorator
 
-In the contract below, the owner of `tokenOwners[tokenId]` is the address stored as its mapping value. When `withdraw` is called, the commitment is nullified and the new value is `address(0)`, so no new commitment is created. This creates a problem if deposit is called again: how can a new owner provide a nullifier if the token was previously owned? The `re-initialisable` decorator solves this by allowing the variable to be re-initialised in `deposit`.
+In the contract below, the owner of `tokenOwners[tokenId]` is the address stored as its mapping value. When `withdraw` is called, the commitment is nullified and the new value is `address(0)`, so no new commitment is created. This creates a problem if deposit is called again: how can a new owner provide a nullifier if the token was previously owned? The `re-initialisable` decorator solves this by allowing the variable to be re-initialised in `deposit`. Note that in the below contract the check `require(tokenOwners[tokenId] == msg.sender, "You're not the owner of this token.");` is essential to ensure that `tokenOwners[tokenId]` cannot be re-initialised maliciously in either `transfer` or `withdraw`. For a non re-initialisable secret variable this check would not be necessary because only the owner could modify it. 
 
 ```solidity
 contract NFT_Escrow {
@@ -272,12 +272,12 @@ contract NFT_Escrow {
   }
 
   function transfer(secret address recipient, secret uint256 tokenId) public {
-      require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+      require(tokenOwners[tokenId] == msg.sender, "You're not the owner of this token.");
       tokenOwners[tokenId] = recipient;
   }
 
   function withdraw(uint256 tokenId) public {
-      require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+      require(tokenOwners[tokenId] == msg.sender, "You're not the owner of this token.");
       tokenOwners[tokenId] = address(0);
       bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
       require(success == true);
