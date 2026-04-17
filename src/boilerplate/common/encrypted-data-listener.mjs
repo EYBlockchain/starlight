@@ -78,8 +78,13 @@ export default class EncryptedDataEventListener {
       .flatMap(e => e.returnValues.nullifiers)
     return Promise.all(
       backupEvents
-        .map(e => decrypt(e.returnValues.cipherText, this.publicKey, this.secretKey))
-        .map(decodeCommitmentData)
+        .map(e => {
+          const commitment = decodeCommitmentData(
+            decrypt(e.returnValues.cipherText, this.publicKey, this.secretKey),
+          );
+          if (commitment) commitment.transactionHash = e.transactionHash;
+          return commitment;
+        })
         .filter(c => c)
         .map(formatCommitment)
         .map(c => {
