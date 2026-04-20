@@ -10,15 +10,6 @@ import { getAllCommitments, getCommitmentsByState } from "./common/commitment-st
 import ServiceManager from './common/serviceManager.mjs'
 import web3 from "./common/web3.mjs";
 
-/**
-      Welcome to your zApp's integration test!
-      Depending on how your functions interact and the range of inputs they expect, the below may need to be changed.
-      e.g. Your input contract has two functions, add() and minus(). minus() cannot be called before an initial add() - the compiler won't know this! You'll need to rearrange the below.
-      e.g. The function add() only takes numbers greater than 100. The compiler won't know this, so you'll need to change the call to add() below.
-      The transpiler automatically fills in any ZKP inputs for you and provides some dummy values for the original zol function.
-      NOTE: if any non-secret functions need to be called first, the transpiler won't know! You'll need to add those calls below.
-      NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
-      */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let encryption = {};
 // eslint-disable-next-line func-names
