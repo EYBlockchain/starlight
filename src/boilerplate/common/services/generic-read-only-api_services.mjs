@@ -20,7 +20,6 @@ import web3 from "./common/web3.mjs";
       NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
       */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 

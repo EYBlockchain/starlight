@@ -852,7 +852,6 @@ integrationApiServicesBoilerplate = {
       minus() cannot be called before an initial add(). */
       
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-      let leafIndex;
       let encryption = {};
       // eslint-disable-next-line func-names
 

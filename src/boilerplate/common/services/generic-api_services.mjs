@@ -20,7 +20,6 @@ import web3 from "./common/web3.mjs";
       NOTE: if you'd like to keep track of your commitments, check out ./common/db/preimage. Remember to delete this file if you'd like to start fresh with a newly deployed contract.
       */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
 
@@ -34,23 +33,21 @@ export class ServiceManager{
     await this.FUNCTION_NAME.init();
   }
 
- async service_FUNCTION_NAME (req, res, next){
+  async service_FUNCTION_NAME (req, res, next){
 	try {
     await startEventFilter('CONTRACT_NAME');
     const FUNCTION_SIG;
-    const { tx , encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
+    const { tx , newLeavesEvent, encEvent, encBackupEvent, _RESPONSE_} = await this.FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG);
     // prints the tx
     console.log(tx);
     const txSerialized = serializeBigInt(tx);
+    const newLeavesEventSerialized = serializeBigInt(newLeavesEvent);
     const encEventSerialized = serializeBigInt(encEvent);
     const encBackupEventSerialized = serializeBigInt(encBackupEvent);
-    res.send({ tx: txSerialized, encEvent: encEventSerialized, encBackupEvent: encBackupEventSerialized, _RESPONSE_ });
-    // reassigns leafIndex to the index of the first commitment added by this function
-    if (tx.event) {
-      leafIndex = tx.returnValues[0];
-      // prints the new leaves (commitments) added by this function call
+    res.send({ tx: txSerialized, newLeavesEvent: newLeavesEventSerialized, encEvent: encEventSerialized, encBackupEvent: encBackupEventSerialized, _RESPONSE_ });
+    if (newLeavesEvent) {
       console.log(`Merkle tree event returnValues:`);
-      console.log(tx.returnValues);
+      console.log(newLeavesEvent.returnValues);
     }
     if (encEvent.event) {
       encryption.msgs = encEvent[0].returnValues[0];

@@ -31,15 +31,15 @@ describe('FUNCTION_NAME', function () {
         await startEventFilter('CONTRACT_NAME');
         // this calls your function! It returns the tx from the shield contract
         // you can replace the values below - numbers are randomly generated
-        const { tx , encEvent, encBackupEvent } = await FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG_1);
+        const { tx , newLeavesEvent, encEvent, encBackupEvent } = await FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG_1);
         // prints the tx
         console.log(tx);
         // reassigns leafIndex to the index of the first commitment added by this function
-        if (tx.event) {
-          leafIndex = tx.returnValues[0];
+        if (newLeavesEvent) {
+          leafIndex = newLeavesEvent.returnValues.minLeafIndex ?? newLeavesEvent.returnValues[0];
           // prints the new leaves (commitments) added by this function call
           console.log(`Merkle tree event returnValues:`);
-          console.log(tx.returnValues[0]);
+          console.log(newLeavesEvent.returnValues);
         }
         if (encEvent && encEvent[0].event) {
             encryption.msgs = encEvent[0].returnValues[0];
@@ -71,10 +71,10 @@ describe('FUNCTION_NAME', function () {
     it('should call FUNCTION_NAME again', async () => {
       try {
         // this calls your function a second time for incremental cases
-        const { tx } = await FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG_2);
-        if (tx.event) {
+        const { tx, newLeavesEvent } = await FUNCTION_NAME.FUNCTION_NAME(FUNCTION_SIG_2);
+        if (newLeavesEvent) {
           console.log(`Merkle tree event returnValues:`);
-          console.log(tx.returnValues[0]);
+          console.log(newLeavesEvent.returnValues);
         }
       } catch (err) {
         logger.error(err);

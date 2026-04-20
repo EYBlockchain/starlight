@@ -6,7 +6,6 @@ import fs from "fs";
 import logger from "./common/logger.mjs";
 import web3 from "./common/web3.mjs";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let leafIndex;
 let encryption = {};
 // eslint-disable-next-line func-names
  async service_FUNCTION_NAME (req, res, next){
@@ -16,9 +15,4 @@ let encryption = {};
     console.log(tx);
     const txSerialized = serializeBigInt(tx);
     res.send({tx: txSerialized, _RESPONSE_});
-   
-    if (tx.event) {
-      console.log(tx.returnValues);
-    }
-  
 }
