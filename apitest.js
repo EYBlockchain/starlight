@@ -22,6 +22,26 @@ const testedZapps = [];
 const zappLogs = new Map(); // Store logs for each zapp
 const displayedZapps = new Set(); // Track which ZApps have already had logs displayed
 
+const getNewLeavesEvent = body => body?.newLeavesEvent ?? null;
+
+const expectNewLeavesEvent = body => {
+  const newLeavesEvent = getNewLeavesEvent(body);
+  expect(newLeavesEvent?.event).to.equal('NewLeaves');
+};
+
+const getMinLeafIndex = body => {
+  const newLeavesEvent = getNewLeavesEvent(body);
+  return parseInt(
+    newLeavesEvent?.returnValues?.minLeafIndex ??
+      newLeavesEvent?.returnValues?.[0],
+    10,
+  );
+};
+
+const expectMinLeafIndex = (body, expectedIndex) => {
+  expect(getMinLeafIndex(body)).to.equal(expectedIndex);
+};
+
 const getUserFriendlyTestNames = async folderPath => {
   try {
     const files = await fs.promises.readdir(folderPath, { withFileTypes: true });
@@ -726,14 +746,14 @@ describe('Arrays Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Arrays[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.Arrays[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.Arrays[2].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Arrays[0].body);
+    expectNewLeavesEvent(res.Arrays[1].body);
+    expectNewLeavesEvent(res.Arrays[2].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Arrays[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Arrays[1].body.tx.returnValues.minLeafIndex)).to.equal(3);
-    expect(parseInt(res.Arrays[2].body.tx.returnValues.minLeafIndex)).to.equal(6);
+    expectMinLeafIndex(res.Arrays[0].body, 0);
+    expectMinLeafIndex(res.Arrays[1].body, 3);
+    expectMinLeafIndex(res.Arrays[2].body, 6);
   });
   it('Check number of commitments', async () => {
     expect(res.Arrays[3].body.commitments.length).to.equal(7);
@@ -754,7 +774,7 @@ describe('Arrays Zapp', () => {
     expect(parseInt(res.Arrays[7].body.commitments[0].preimage.value)).to.equal(9);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.Arrays[9].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Arrays[9].body);
     expect(parseInt(res.Arrays[10].body.commitments[1].preimage.value)).to.equal(0);
     expect(res.Arrays[10].body.commitments[1].isNullified).to.equal(false);
     expect(parseInt(res.Arrays[11].body.commitments[0].preimage.value)).to.equal(7);
@@ -773,14 +793,14 @@ describe('Assign Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Assign[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.Assign[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.Assign[3].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Assign[0].body);
+    expectNewLeavesEvent(res.Assign[1].body);
+    expectNewLeavesEvent(res.Assign[3].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Assign[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Assign[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.Assign[3].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expectMinLeafIndex(res.Assign[0].body, 0);
+    expectMinLeafIndex(res.Assign[1].body, 1);
+    expectMinLeafIndex(res.Assign[3].body, 2);
   });
   it('test getBalance', async () => {
     expect(parseInt(res.Assign[2].body.totalBalance)).to.equal(19);
@@ -802,7 +822,7 @@ describe('Assign Zapp', () => {
     expect(res.Assign[8].body.commitments[0].isNullified).to.equal(true);
     expect(res.Assign[8].body.commitments[1].isNullified).to.equal(true);
     expect(res.Assign[8].body.commitments[2].isNullified).to.equal(false);
-    expect(res.Assign[9].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Assign[9].body);
   });
 });
 
@@ -813,12 +833,12 @@ describe('Assign-api Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Assign_api[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.Assign_api[1].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Assign_api[0].body);
+    expectNewLeavesEvent(res.Assign_api[1].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Assign_api[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Assign_api[1].body.tx.returnValues.minLeafIndex)).to.equal(3);
+    expectMinLeafIndex(res.Assign_api[0].body, 0);
+    expectMinLeafIndex(res.Assign_api[1].body, 3);
   });
   it('test public read only function', async () => {
     expect(parseInt(res.Assign_api[3].body.publicReturns)).to.equal(50);
@@ -844,20 +864,14 @@ describe('BucketsOfBalls Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.BucketsOfBalls[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.BucketsOfBalls[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.BucketsOfBalls[2].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.BucketsOfBalls[0].body);
+    expectNewLeavesEvent(res.BucketsOfBalls[1].body);
+    expectNewLeavesEvent(res.BucketsOfBalls[2].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(
-      parseInt(res.BucketsOfBalls[0].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(0);
-    expect(
-      parseInt(res.BucketsOfBalls[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(1);
-    expect(
-      parseInt(res.BucketsOfBalls[2].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(2);
+    expectMinLeafIndex(res.BucketsOfBalls[0].body, 0);
+    expectMinLeafIndex(res.BucketsOfBalls[1].body, 1);
+    expectMinLeafIndex(res.BucketsOfBalls[2].body, 2);
   });
   it('Check number of commitments', async () => {
     expect(res.BucketsOfBalls[3].body.commitments.length).to.equal(4);
@@ -886,7 +900,7 @@ describe('BucketsOfBalls Zapp', () => {
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     expect(res.BucketsOfBalls[7].body.commitments.length).to.equal(3);
-    expect(res.BucketsOfBalls[8].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.BucketsOfBalls[8].body);
   });
   it('Test getBalanceByState', async () => {
     expect(parseInt(res.BucketsOfBalls[9].body.totalBalance, 10)).to.equal(3);
@@ -901,24 +915,16 @@ describe('CharityPot Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.CharityPot[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.CharityPot[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.CharityPot[2].body.tx.event).to.equal('NewLeaves');
-    expect(res.CharityPot[3].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.CharityPot[0].body);
+    expectNewLeavesEvent(res.CharityPot[1].body);
+    expectNewLeavesEvent(res.CharityPot[2].body);
+    expectNewLeavesEvent(res.CharityPot[3].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(
-      parseInt(res.CharityPot[0].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(0);
-    expect(
-      parseInt(res.CharityPot[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(1);
-    expect(
-      parseInt(res.CharityPot[2].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(3);
-    expect(
-      parseInt(res.CharityPot[3].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(5);
+    expectMinLeafIndex(res.CharityPot[0].body, 0);
+    expectMinLeafIndex(res.CharityPot[1].body, 1);
+    expectMinLeafIndex(res.CharityPot[2].body, 3);
+    expectMinLeafIndex(res.CharityPot[3].body, 5);
   });
   it('Check number of commitments', async () => {
     expect(res.CharityPot[4].body.commitments.length).to.equal(3);
@@ -950,7 +956,7 @@ describe('CharityPot Zapp', () => {
     expect(res.CharityPot[7].body.commitments[4].isNullified).to.equal(true);
     expect(res.CharityPot[7].body.commitments[5].isNullified).to.equal(false);
     expect(res.CharityPot[7].body.commitments[6].isNullified).to.equal(false);
-    expect(res.CharityPot[8].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.CharityPot[8].body);
   });
 });
 
@@ -965,14 +971,14 @@ describe('Constructor Zapp', () => {
     expect(parseInt(res.Constructor[0].body.commitments[0].preimage.value)).to.equal(5);
   });
   it('tests APIs are working', async () => {
-    expect(res.Constructor[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.Constructor[2].body.tx.event).to.equal('NewLeaves');
-    expect(res.Constructor[4].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Constructor[1].body);
+    expectNewLeavesEvent(res.Constructor[2].body);
+    expectNewLeavesEvent(res.Constructor[4].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Constructor[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.Constructor[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
-    expect(parseInt(res.Constructor[4].body.tx.returnValues.minLeafIndex)).to.equal(3);
+    expectMinLeafIndex(res.Constructor[1].body, 1);
+    expectMinLeafIndex(res.Constructor[2].body, 2);
+    expectMinLeafIndex(res.Constructor[4].body, 3);
   });
   it('test getBalance', async () => {
     expect(parseInt(res.Constructor[3].body.totalBalance)).to.equal(31);
@@ -996,7 +1002,7 @@ describe('Constructor Zapp', () => {
     expect(res.Constructor[8].body.commitments[1].isNullified).to.equal(true);
     expect(res.Constructor[8].body.commitments[2].isNullified).to.equal(true);
     expect(res.Constructor[8].body.commitments[3].isNullified).to.equal(false);
-    expect(res.Constructor[9].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Constructor[9].body);
   });
 });
 
@@ -1007,12 +1013,12 @@ describe('Encrypt Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Encrypt[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.Encrypt[1].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Encrypt[0].body);
+    expectNewLeavesEvent(res.Encrypt[1].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Encrypt[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Encrypt[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expectMinLeafIndex(res.Encrypt[0].body, 0);
+    expectMinLeafIndex(res.Encrypt[1].body, 1);
   });
   it('Check number of commitments', async () => {
     expect(res.Encrypt[2].body.commitments.length).to.equal(3);
@@ -1036,32 +1042,20 @@ describe('Escrow Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Escrow[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.Escrow[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.Escrow[2].body.tx.event).to.equal('NewLeaves');
-    expect(res.Escrow[3].body.tx.event).to.equal('NewLeaves');
-    expect(res.Escrow[4].body.tx.event).to.equal('NewLeaves');
-    expect(res.Escrow[5].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Escrow[0].body);
+    expectNewLeavesEvent(res.Escrow[1].body);
+    expectNewLeavesEvent(res.Escrow[2].body);
+    expectNewLeavesEvent(res.Escrow[3].body);
+    expectNewLeavesEvent(res.Escrow[4].body);
+    expectNewLeavesEvent(res.Escrow[5].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(
-      parseInt(res.Escrow[0].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(0);
-    expect(
-      parseInt(res.Escrow[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(1);
-    expect(
-      parseInt(res.Escrow[2].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(2);
-    expect(
-      parseInt(res.Escrow[3].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(6);
-    expect(
-      parseInt(res.Escrow[4].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(7);
-    expect(
-      parseInt(res.Escrow[5].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(10);
+    expectMinLeafIndex(res.Escrow[0].body, 0);
+    expectMinLeafIndex(res.Escrow[1].body, 1);
+    expectMinLeafIndex(res.Escrow[2].body, 2);
+    expectMinLeafIndex(res.Escrow[3].body, 6);
+    expectMinLeafIndex(res.Escrow[4].body, 7);
+    expectMinLeafIndex(res.Escrow[5].body, 10);
   });
   it('Check number of commitments', async () => {
     expect(res.Escrow[6].body.commitments.length).to.equal(12);
@@ -1099,7 +1093,7 @@ describe('Escrow Zapp', () => {
     expect(res.Escrow[11].body.commitments[4].isNullified).to.equal(false);
     expect(res.Escrow[12].body.commitments[0].isNullified).to.equal(false);
     expect(res.Escrow[12].body.commitments[1].isNullified).to.equal(false);
-    expect(res.Escrow[13].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Escrow[13].body);
   });
 });
 
@@ -1110,12 +1104,12 @@ describe('for-loop Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.forloop[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.forloop[1].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.forloop[0].body);
+    expectNewLeavesEvent(res.forloop[1].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.forloop[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.forloop[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expectMinLeafIndex(res.forloop[0].body, 0);
+    expectMinLeafIndex(res.forloop[1].body, 1);
   });
   it('Check number of commitments', async () => {
     expect(res.forloop[2].body.commitments.length).to.equal(2);
@@ -1136,12 +1130,12 @@ describe('If-Statement Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.IfStatement[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.IfStatement[1].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.IfStatement[0].body);
+    expectNewLeavesEvent(res.IfStatement[1].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.IfStatement[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.IfStatement[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expectMinLeafIndex(res.IfStatement[0].body, 0);
+    expectMinLeafIndex(res.IfStatement[1].body, 1);
   });
   it('Check number of commitments', async () => {
     expect(res.IfStatement[2].body.commitments.length).to.equal(2);
@@ -1159,20 +1153,20 @@ describe('If-Statement Zapp', () => {
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     expect(res.IfStatement[5].body.commitments.length).to.equal(2);
-    expect(res.IfStatement[6].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.IfStatement[6].body);
   });
 });
 
 /*describe('InternalFunctionCall Zapp', () => {
   it('tests APIs are working', async () => {
-    expect(res.InternalFunctionCall[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCall[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCall[2].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.InternalFunctionCall[0].body);
+    expectNewLeavesEvent(res.InternalFunctionCall[1].body);
+    expectNewLeavesEvent(res.InternalFunctionCall[2].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.InternalFunctionCall[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.InternalFunctionCall[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.InternalFunctionCall[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expectMinLeafIndex(res.InternalFunctionCall[0].body, 0);
+    expectMinLeafIndex(res.InternalFunctionCall[1].body, 1);
+    expectMinLeafIndex(res.InternalFunctionCall[2].body, 2);
   });
   it('Check number of commitments', async () => {
     expect(res.InternalFunctionCall[3].body.commitments.length).to.equal(4);
@@ -1196,12 +1190,12 @@ describe('MappingtoStruct Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.MappingtoStruct[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.MappingtoStruct[1].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.MappingtoStruct[0].body);
+    expectNewLeavesEvent(res.MappingtoStruct[1].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.MappingtoStruct[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.MappingtoStruct[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
+    expectMinLeafIndex(res.MappingtoStruct[0].body, 0);
+    expectMinLeafIndex(res.MappingtoStruct[1].body, 1);
   });
   it('Check number of commitments', async () => {
     expect(res.MappingtoStruct[2].body.commitments.length).to.equal(2);
@@ -1217,7 +1211,7 @@ describe('MappingtoStruct Zapp', () => {
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
     expect(res.MappingtoStruct[5].body.commitments.length).to.equal(2);
-    expect(res.MappingtoStruct[6].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.MappingtoStruct[6].body);
   });
 });
 
@@ -1228,32 +1222,20 @@ describe('NFT_Escrow Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.NFT_Escrow[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.NFT_Escrow[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.NFT_Escrow[2].body.tx.event).to.equal('NewLeaves');
-    expect(res.NFT_Escrow[3].body.tx.event).to.equal('NewLeaves');
-    expect(res.NFT_Escrow[5].body.tx.event).to.equal('NewLeaves');
-    expect(res.NFT_Escrow[6].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.NFT_Escrow[0].body);
+    expectNewLeavesEvent(res.NFT_Escrow[1].body);
+    expectNewLeavesEvent(res.NFT_Escrow[2].body);
+    expectNewLeavesEvent(res.NFT_Escrow[3].body);
+    expectNewLeavesEvent(res.NFT_Escrow[5].body);
+    expectNewLeavesEvent(res.NFT_Escrow[6].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(
-      parseInt(res.NFT_Escrow[0].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(0);
-    expect(
-      parseInt(res.NFT_Escrow[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(1);
-    expect(
-      parseInt(res.NFT_Escrow[2].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(2);
-    expect(
-      parseInt(res.NFT_Escrow[3].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(3);
-    expect(
-      parseInt(res.NFT_Escrow[5].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(4);
-    expect(
-      parseInt(res.NFT_Escrow[6].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(5);
+    expectMinLeafIndex(res.NFT_Escrow[0].body, 0);
+    expectMinLeafIndex(res.NFT_Escrow[1].body, 1);
+    expectMinLeafIndex(res.NFT_Escrow[2].body, 2);
+    expectMinLeafIndex(res.NFT_Escrow[3].body, 3);
+    expectMinLeafIndex(res.NFT_Escrow[5].body, 4);
+    expectMinLeafIndex(res.NFT_Escrow[6].body, 5);
   });
   it('Check number of commitments', async () => {
     expect(res.NFT_Escrow[7].body.commitments.length).to.equal(6);
@@ -1310,12 +1292,12 @@ describe('Return Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Return[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.Return[1].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.Return[0].body);
+    expectNewLeavesEvent(res.Return[1].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.Return[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.Return[1].body.tx.returnValues.minLeafIndex)).to.equal(3);
+    expectMinLeafIndex(res.Return[0].body, 0);
+    expectMinLeafIndex(res.Return[1].body, 3);
   });
   it('Check number of commitments', async () => {
     expect(res.Return[2].body.commitments.length).to.equal(4);
@@ -1338,14 +1320,14 @@ describe('SimpleStruct Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.SimpleStruct[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.SimpleStruct[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.SimpleStruct[2].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.SimpleStruct[0].body);
+    expectNewLeavesEvent(res.SimpleStruct[1].body);
+    expectNewLeavesEvent(res.SimpleStruct[2].body);
   });
   it('MinLeaf Index check', async () => {
-    expect(parseInt(res.SimpleStruct[0].body.tx.returnValues.minLeafIndex)).to.equal(0);
-    expect(parseInt(res.SimpleStruct[1].body.tx.returnValues.minLeafIndex)).to.equal(1);
-    expect(parseInt(res.SimpleStruct[2].body.tx.returnValues.minLeafIndex)).to.equal(2);
+    expectMinLeafIndex(res.SimpleStruct[0].body, 0);
+    expectMinLeafIndex(res.SimpleStruct[1].body, 1);
+    expectMinLeafIndex(res.SimpleStruct[2].body, 2);
   });
   it('Check number of commitments', async () => {
     expect(res.SimpleStruct[3].body.commitments.length).to.equal(4);
@@ -1370,10 +1352,10 @@ describe('InternalFunctionCallTest1 Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.InternalFunctionCallTest1[0].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCallTest1[1].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCallTest1[3].body.tx.event).to.equal('NewLeaves');
-    expect(res.InternalFunctionCallTest1[4].body.tx.event).to.equal('NewLeaves');
+    expectNewLeavesEvent(res.InternalFunctionCallTest1[0].body);
+    expectNewLeavesEvent(res.InternalFunctionCallTest1[1].body);
+    expectNewLeavesEvent(res.InternalFunctionCallTest1[3].body);
+    expectNewLeavesEvent(res.InternalFunctionCallTest1[4].body);
   });
   it('Check value after internal function call intialize', async () => {
     expect(res.InternalFunctionCallTest1[2].body.commitments[0].isNullified).to.equal(true);
@@ -1398,25 +1380,17 @@ describe('Swap Zapp', () => {
     }
   });
   it('tests APIs are working', async () => {
-    expect(res.Swap[0].body.tx.event).to.equal('NewLeaves'); // deposit 1
-    expect(res.Swap[1].body.tx.event).to.equal('NewLeaves'); // deposit 2
-    expect(res.Swap[3].body.tx.event).to.equal('NewLeaves'); // startSwap
-    expect(res.Swap[5].body.tx.event).to.equal('NewLeaves'); // completeSwap
+    expectNewLeavesEvent(res.Swap[0].body); // deposit 1
+    expectNewLeavesEvent(res.Swap[1].body); // deposit 2
+    expectNewLeavesEvent(res.Swap[3].body); // startSwap
+    expectNewLeavesEvent(res.Swap[5].body); // completeSwap
   });
 
   it('MinLeaf Index check', async () => {
-    expect(
-      parseInt(res.Swap[0].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(0); // deposit 1
-    expect(
-      parseInt(res.Swap[1].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(2); // deposit 2
-    expect(
-      parseInt(res.Swap[3].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(4); // startSwap
-    expect(
-      parseInt(res.Swap[5].body.tx.returnValues.minLeafIndex, 10),
-    ).to.equal(7); // completeSwap
+    expectMinLeafIndex(res.Swap[0].body, 0); // deposit 1
+    expectMinLeafIndex(res.Swap[1].body, 2); // deposit 2
+    expectMinLeafIndex(res.Swap[3].body, 4); // startSwap
+    expectMinLeafIndex(res.Swap[5].body, 7); // completeSwap
   });
 
   it('Check number of commitments', async () => {
