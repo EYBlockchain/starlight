@@ -687,6 +687,9 @@ sendTransaction = {
       isConstructor
     }): string[] {
       let value;
+      const transactionHash = isConstructor
+        ? `null`
+        : `encBackupEvent?.[0]?.transactionHash || null`;
       const commitmentType = !Array.isArray(valueType) && ['bytes20', 'address'].includes(valueType)
         ? `\n            type: '${valueType}',`
         : '';
@@ -708,6 +711,7 @@ sendTransaction = {
           \nawait storeCommitment({
             hash: ${stateName}_newCommitment,
             name: '${mappingName}',
+            transactionHash: ${transactionHash},
             mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
             ${commitmentType}
             ${commitmentTypeNames}
@@ -729,6 +733,7 @@ sendTransaction = {
             \nawait storeCommitment({
               hash: ${stateName}_2_newCommitment,
               name: '${mappingName}',
+              transactionHash: ${transactionHash},
               mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
               ${commitmentType}
               ${commitmentTypeNames}
@@ -755,6 +760,7 @@ sendTransaction = {
                 \nawait storeCommitment({
                   hash: ${stateName}_newCommitment,
                   name: '${mappingName}',
+                  transactionHash: ${transactionHash},
                   mappingKey: ${mappingKey === `` ? `null` : `${mappingKey}`},
                   ${commitmentType}
                   ${commitmentTypeNames}
