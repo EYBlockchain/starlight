@@ -8,20 +8,8 @@ contract Escrow {
 
     secret mapping(address => uint256) public balances;
     IERC20 public erc20;
-    secret bytes20[] public b;
-
-    struct TypeTest {
-        uint256 amount;
-        bytes20 amount2;
-        address amount3;
-        bool amount4;
-    }
 
     sharedSecret mapping(address => bytes20) references;  
-
-    secret mapping(uint256 => TypeTest) private d;
-    secret bytes20 recentReference;
-    secret TypeTest refStruct;
 
     constructor(address erc20Address) {
         erc20 = IERC20(erc20Address);
@@ -38,16 +26,6 @@ contract Escrow {
         balances[msg.sender] -= amount;
         unknown balances[recipient] += amount;
         references[sharedAddress] = transferRef;
-        recentReference = transferRef;
-        b[0] = transferRef;
-        refStruct.amount = 5;
-        refStruct.amount4 = true;
-        refStruct.amount3 = recipient;
-        refStruct.amount2 = transferRef;
-        d[0].amount = 5;
-        d[0].amount4 = true;
-        d[0].amount3 = recipient;
-        d[0].amount2 = transferRef;
 
     }
 

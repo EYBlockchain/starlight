@@ -50,6 +50,22 @@ export default class BackupEncryptedDataEventListener {
     this.lastProcessedBlock = 0; // Track last block we processed
   }
 
+  loadKeys() {
+    const keys = JSON.parse(fs.readFileSync(keyDb, 'utf-8'));
+    this.secretKey = generalise(keys.secretKey);
+    this.publicKey = generalise(keys.publicKey);
+    this.sharedPublicKey = keys.sharedPublicKey
+      ? generalise(keys.sharedPublicKey)
+      : null;
+    this.sharedSecretKey = keys.sharedSecretKey
+      ? generalise(keys.sharedSecretKey)
+      : null;
+
+    if (!keys.secretKey || !keys.publicKey) {
+      throw new Error('Invalid key file: missing required keys');
+    }
+  }
+
   async init() {
     try {
       this.instance = await getContractInstance('CONTRACT_NAME');
@@ -64,15 +80,7 @@ export default class BackupEncryptedDataEventListener {
       if (!fs.existsSync(keyDb))
         await registerKey(utils.randomHex(31), 'CONTRACT_NAME', true);
 
-      const keys = JSON.parse(fs.readFileSync(keyDb, 'utf-8'));
-      this.secretKey = generalise(keys.secretKey);
-      this.publicKey = generalise(keys.publicKey);
-      this.sharedPublicKey = generalise(keys.sharedPublicKey);
-      this.sharedSecretKey = generalise(keys.sharedSecretKey);
-
-      if (!keys.secretKey || !keys.publicKey) {
-        throw new Error('Invalid key file: missing required keys');
-      }
+      this.loadKeys();
     } catch (error) {
       console.error(
         'encrypted-data-listener',
@@ -240,6 +248,9 @@ export default class BackupEncryptedDataEventListener {
   async processBackupEventData(eventData) {
     activeBackupProcesses += 1;
     try {
+      // Shared keys are written to key.json at runtime, so reload them here
+      // rather than relying on the values captured when the listener started.
+      this.loadKeys();
       const keyPairs = [
         { secretKey: this.secretKey, publicKey: this.publicKey },
         { secretKey: this.sharedSecretKey, publicKey: this.sharedPublicKey },
