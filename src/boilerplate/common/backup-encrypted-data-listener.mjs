@@ -399,6 +399,7 @@ export default class BackupEncryptedDataEventListener {
             await storeCommitment({
               hash: newCommitment,
               name,
+              transactionHash: eventData.transactionHash || null,
               mappingKey: mappingKey?.integer,
               type: commitmentType,
               typeNames: structTypeNames,
