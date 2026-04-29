@@ -35,6 +35,7 @@ contract NFT_Escrow {
         require(approvals[msg.sender] == sender);
         require(recipient != address(0), "NFT_Escrow: transfer to the zero address");
         require(sender != address(0), "NFT_Escrow: transfer from the zero address");
+        require(tokenOwners[tokenId] == sender);
         tokenOwners[tokenId] = recipient;
     }
 

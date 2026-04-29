@@ -83,6 +83,7 @@ export function formatCommitment(commitment) {
       _id: commitment.hash.hex(32),
       name: commitment.name,
       source: commitment.source,
+      transactionHash: commitment.transactionHash ?? null,
       type: commitment.type ?? null,
       typeNames: Array.isArray(commitment.typeNames)
         ? commitment.typeNames

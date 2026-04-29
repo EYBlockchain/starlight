@@ -254,7 +254,7 @@ contract Swap {
 ---
 #### Example: Using the `re-initisalisable` decorator
 
-In the contract below, the owner of `tokenOwners[tokenId]` is the address stored as its mapping value. When `withdraw` is called, the commitment is nullified and the new value is `address(0)`, so no new commitment is created. This creates a problem if deposit is called again: how can a new owner provide a nullifier if the token was previously owned? The `re-initialisable` decorator solves this by allowing the variable to be re-initialised in `deposit`.
+In the contract below, the owner of `tokenOwners[tokenId]` is the address stored as its mapping value. When `withdraw` is called, the commitment is nullified and the new value is `address(0)`, so no new commitment is created. This creates a problem if deposit is called again: how can a new owner provide a nullifier if the token was previously owned? The `re-initialisable` decorator solves this by allowing the variable to be re-initialised in `deposit`. Note that in the below contract the check `require(tokenOwners[tokenId] == msg.sender, "You're not the owner of this token.");` is essential to ensure that `tokenOwners[tokenId]` cannot be re-initialised maliciously in either `transfer` or `withdraw`. For a non re-initialisable secret variable this check would not be necessary because only the owner could modify it. 
 
 ```solidity
 contract NFT_Escrow {
@@ -272,12 +272,12 @@ contract NFT_Escrow {
   }
 
   function transfer(secret address recipient, secret uint256 tokenId) public {
-      require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+      require(tokenOwners[tokenId] == msg.sender, "You're not the owner of this token.");
       tokenOwners[tokenId] = recipient;
   }
 
   function withdraw(uint256 tokenId) public {
-      require(tokenOwners[tokenId] == msg.sender, "Youre not the owner of this token.");
+      require(tokenOwners[tokenId] == msg.sender, "You're not the owner of this token.");
       tokenOwners[tokenId] = address(0);
       bool success = erc721.transferFrom(address(this), msg.sender, tokenId);
       require(success == true);
@@ -518,7 +518,7 @@ $ sh bin/startup-double
 
 This starts two orchestration servers running the Swap contract that can be reached on ports 3000 and 3001 respectively. Let's say user A runs its server on port 3001 and user B on 3000.
 
-For user A to initiate a swap with B, it needs a shared secret key derived from its public key (`recipientPubKey`) and the private key from user B. This is how B would compute the shared secret using the public key from A, send:
+For user A to initiate a swap with B, it needs a shared secret key derived from the public key of user B (`recipientPubKey`) and its own private key. This is how A would compute the shared secret using the public key from B, send:
 
 ```
 {
@@ -537,6 +537,8 @@ Response:
 ```
 
 Use this shared key as the `sharedAddress` in swap interactions.
+
+User B should do the same before the swap is initiated. Otherwise, their commitment DB will not be automatically updated via the event listener after User A runs `startSwap`. However, if they forget, they can always use the `backupDataRetriever` API to force the commitment DB to update. In their case `recipientPubKey` is set to the public key of user A. 
 
 
 ##### Deposit Tokens
@@ -563,13 +565,14 @@ as a POST request to `http://localhost:3000/deposit`.
 
 
 ##### Initiate Swap
-User A proposes a swap to the shared address, they send:
+User A proposes a swap to the shared address. First, they must obtain the public key of user B for the encryption, so that user B will receive commitment preimages via the event listener. This public key is saved in `zapps/Swap/orchestration/common/db/key1.json`, lets say it is `18506935782509777864732454467672391704006521439730278073755619393220081058435`. This should be used as the `tokenOwners_tokenIdSent_newOwnerPublicKey`. They send:
 ```
 {
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "amountSent": 30,
   "tokenIdSent": 1,
-  "tokenIdRecieved": 2
+  "tokenIdRecieved": 2,
+  "tokenOwners_tokenIdSent_newOwnerPublicKey": "18506935782509777864732454467672391704006521439730278073755619393220081058435"
 }
 ```
 as a POST request to `http://localhost:3001/startSwap`.
@@ -577,14 +580,15 @@ as a POST request to `http://localhost:3001/startSwap`.
 This deducts 30 tokens from User A and locks token 1 for the proposed swap.
 
 ##### Complete Swap
-User B accepts the swap with a matching offer, they send:
+User B accepts the swap with a matching offer. User B must similarly obtain the public key of user A. This public key is saved in `zapps/Swap/orchestration/common/db/key2.json`, lets say it is `19113029868759597499687530931590653617019453270233891831264939544742234896197`. Again, this should be used as the `tokenOwners_tokenIdSent_newOwnerPublicKey`. They send:
 ```
 {
   "sharedAddress": "0x3e574c310f7bc1657f7e0e127690a8f885e4bcd42c15489a332ed9a6658bfef6",
   "counterParty": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
   "tokenIdSent": 2,
   "tokenIdRecieved": 1,
-  "amountRecieved": 30
+  "amountRecieved": 30,
+  "tokenOwners_tokenIdSent_newOwnerPublicKey": "19113029868759597499687530931590653617019453270233891831264939544742234896197"
 }
 ```
  as a POST request to `http://localhost:3000/completeSwap`. 
