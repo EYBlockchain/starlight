@@ -30,7 +30,6 @@ const disallowedVariableNames = new Set([
   'txParams',
   'tx',
   'signed',
-  'sendTxn',
   'encEvent',
   'encBackupEvent',
   'publicReturns',

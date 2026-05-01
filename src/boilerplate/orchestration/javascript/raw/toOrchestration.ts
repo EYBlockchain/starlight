@@ -576,7 +576,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
        rtnparams?.push( ` ${param.replace('_change', '').replace('_newCommitmentValue', '')}_newCommitmentValue : ${param}.integer  `);
      });
       if (params) params[params.length - 1] += `,`;
-      let txReturns = "tx, encEvent, encBackupEvent,";
+      let txReturns = "tx, newLeavesEvent, encEvent, encBackupEvent,";
       if (node.stateMutability === 'view'){
         txReturns = "";
       }
@@ -743,7 +743,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
       }
       if (node.isConstructor)
         lines.push(
-          `\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`,
+          `\nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(constructorInput, null, 4));`,
         );
       return {
         statements: [
@@ -1047,7 +1047,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             \nBackupData.forEach((element) => {
               element.cipherText = element.cipherText.map(ct => generalise(ct).hex(32));
             });
-            \nconst tx = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]} cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData], nullifiers: ${params[0][1]} ${publicInputs}};`
+            \nconst constructorInput = { proofInput: [{customInputs: [${returnInputs}], newNullifiers: ${params[0][0]} commitmentRoot:${params[0][1]} checkNullifiers: ${params[0][3]} newCommitments: ${params[0][2]} cipherText:${params[0][4]}  encKeys: ${params[0][5]}}, proof, BackupData], nullifiers: ${params[0][1]} ${publicInputs}};`
           ]
         }
       }
@@ -1071,8 +1071,8 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         };
       }
       let checkLeaves = 
-        `\n tx = tx[0];\n
-        \n if (!tx) {
+        `\n newLeavesEvent = newLeavesEvents[0];\n
+        \n if (!newLeavesEvent) {
           throw new Error( 'Tx failed - the commitment was not accepted on-chain, or the contract is not deployed.');
         } \n`;
       if (!node.newCommitmentsRequired) {
@@ -1094,18 +1094,19 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
             };
             \n 	const key = config.web3.key;
             \n 	const signed = await web3.eth.accounts.signTransaction(txParams, key);
-            \n 	const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
-            \n  let tx = await instance.getPastEvents("NewLeaves", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
+            \n 	const tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+            \n  const newLeavesEvents = await instance.getPastEvents("NewLeaves", {fromBlock: tx?.blockNumber || 0, toBlock: tx?.blockNumber || 'latest'});
+            \n  let newLeavesEvent = null;
             ${checkLeaves}
             let encEvent = '';
             \n try {
-            \n  encEvent = await instance.getPastEvents("EncryptedData", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
+            \n  encEvent = await instance.getPastEvents("EncryptedData", {fromBlock: tx?.blockNumber || 0, toBlock: tx?.blockNumber || 'latest'});
             \n } catch (err) {
             \n  console.log('No encrypted event');
             \n}
             \nlet encBackupEvent = '';
             \n try {
-            \n  encBackupEvent = await instance.getPastEvents("EncryptedBackupData", {fromBlock: sendTxn?.blockNumber || 0, toBlock: sendTxn?.blockNumber || 'latest'});
+            \n  encBackupEvent = await instance.getPastEvents("EncryptedBackupData", {fromBlock: tx?.blockNumber || 0, toBlock: tx?.blockNumber || 'latest'});
             \n } catch (err) {
             \n  console.log('No encrypted backup event');
             \n}`,
@@ -1138,11 +1139,11 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
         return {
           statements: [
             `\n\n// Save transaction for the constructor:
-            \nconst tx = { ${lines}};
+            \nconst constructorInput = { ${lines}};
             \n if (!fs.existsSync("/app/orchestration/common/db")) {
 		        \n    fs.mkdirSync("/app/orchestration/common/db", { recursive: true });
 	          \n }
-            \nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(tx, null, 4));`
+            \nfs.writeFileSync("/app/orchestration/common/db/constructorTx.json", JSON.stringify(constructorInput, null, 4));`
           ],
         };
       }
@@ -1196,6 +1197,7 @@ export const OrchestrationCodeBoilerPlate: any = (node: any) => {
           \nconst key = config.web3.key;
           \nconst signed = await web3.eth.accounts.signTransaction(txParams, key);
           \nconst tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+          \nconst newLeavesEvent = null;
           \nconst encEvent = {};
           \nconst encBackupEvent ={};
          `
