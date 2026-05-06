@@ -83,6 +83,7 @@ export function formatCommitment(commitment) {
       _id: commitment.hash.hex(32),
       name: commitment.name,
       source: commitment.source,
+      transactionHash: commitment.transactionHash ?? null,
       type: commitment.type ?? null,
       typeNames: Array.isArray(commitment.typeNames)
         ? commitment.typeNames
@@ -506,14 +507,12 @@ export async function joinCommitments(
 
   const signed = await web3.eth.accounts.signTransaction(txParams, key);
 
-  const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+  const tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-  let tx = await instance.getPastEvents('allEvents', {
-    fromBlock: sendTxn?.blockNumber || 0,
-    toBlock: sendTxn?.blockNumber || 'latest',
+  await instance.getPastEvents('allEvents', {
+    fromBlock: tx?.blockNumber || 0,
+    toBlock: tx?.blockNumber || 'latest',
   });
-
-  tx = tx[0];
 
   await markNullified(generalise(commitments[0]._id), secretKey.hex(32));
   await markNullified(generalise(commitments[1]._id), secretKey.hex(32));
@@ -675,14 +674,12 @@ export async function splitCommitments(
 
   const signed = await web3.eth.accounts.signTransaction(txParams, key);
 
-  const sendTxn = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+  const tx = await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-  let tx = await instance.getPastEvents('allEvents', {
-    fromBlock: sendTxn?.blockNumber || 0,
-    toBlock: sendTxn?.blockNumber || 'latest',
+  await instance.getPastEvents('allEvents', {
+    fromBlock: tx?.blockNumber || 0,
+    toBlock: tx?.blockNumber || 'latest',
   });
-
-  tx = tx[0];
 
   await markNullified(generalise(commitment._id), secretKey.hex(32));
 

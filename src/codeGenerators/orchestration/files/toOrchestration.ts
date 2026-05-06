@@ -307,6 +307,7 @@ node.stateVariables?.forEach(
           hash: newCommitment,
           name: '${variable.name}',
           source: 'encrypted data',
+          transactionHash: eventData.transactionHash || null,
           mappingKey: stateVarId.integer,
           preimage: {
             stateVarId,
@@ -358,6 +359,7 @@ node.stateVariables?.forEach(
           hash: newCommitment,
           name: '${variable.name}',
           source: 'encrypted data',
+          transactionHash: eventData.transactionHash || null,
           mappingKey: stateVarId.integer,
           preimage: {
             stateVarId,
@@ -811,6 +813,7 @@ const prepareBackupVariable = (node: any) => {
         await storeCommitment({
           hash: newCommitment,
           name: name,
+          transactionHash: log.transactionHash || null,
           mappingKey: mappingKey?.integer,
           type: commitmentType,
           typeNames: structTypeNames,
@@ -1045,6 +1048,7 @@ const prepareBackupDataRetriever = (node: any) => {
           await storeCommitment({
             hash: newCommitment,
             name: name,
+            transactionHash: log.transactionHash || null,
             mappingKey: mappingKey?.integer,
             type: commitmentType,
             typeNames: structTypeNames,
