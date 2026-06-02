@@ -371,15 +371,14 @@ export const preimageBoilerPlate = (node: any) => {
       default:
         // TODO - this is the case where the owner is an admin (state var)
         // we have to let the user submit the key and check it in the contract
-        if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
+        if (stateNode.isSharedSecret) {
+          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
+        } else if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${newOwner}().call()).call()) : ${privateStateName}_newOwnerPublicKey;`;
         } else if (stateNode.ownerIsParam && newOwner) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         } else {
           // is secret - we just use the users to avoid revealing the secret owner
-          if(stateNode.isSharedSecret)
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
-          else
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`
 
           // BELOW reveals the secret owner as we check the public key in the contract
