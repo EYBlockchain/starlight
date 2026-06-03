@@ -44,6 +44,26 @@ function tidy(_line: string) {
   return line;
 }
 
+type PathModule = Pick<typeof path, 'relative' | 'sep'>;
+
+/**
+ * Build the source-map key for an imported Solidity file.
+ *
+ * solc's `findImports` callback always receives '/'-separated import paths, so
+ * the keys we register in the sources map must use '/' as well. `path.relative`
+ * returns OS-native separators — '/' on POSIX but '\' on Windows — so we
+ * normalise here. On POSIX this is a no-op; on Windows it converts the '\'
+ * separators that would otherwise cause "couldn't find the import" failures.
+ *
+ * `p` is injectable purely so this can be unit-tested deterministically for both
+ * `path.posix` and `path.win32` regardless of the host OS.
+ */
+export const toImportKey = (
+  topDir: string,
+  importPath: string,
+  p: PathModule = path,
+): string => p.relative(topDir, importPath).split(p.sep).join('/');
+
 const buildSources = (file: any, options: any) => {
   const sources = {};
   const contractsFiles = [];
@@ -60,7 +80,8 @@ const buildSources = (file: any, options: any) => {
           relPath,
         );
 
-        relPath = path.relative(options.topDir, importPath);
+        // Normalise to '/' so this key matches what solc passes to findImports.
+        relPath = toImportKey(options.topDir, importPath);
 
         contractsFiles.push([importPath, relPath]);
       }
