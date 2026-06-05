@@ -1093,8 +1093,8 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
     {
-      readPath: pathPrefix + '/backup-encrypted-data-listener.mjs',
-      writePath: './orchestration/common/backup-encrypted-data-listener.mjs',
+      readPath: pathPrefix + '/nullifier-reconciliation.mjs',
+      writePath: './orchestration/common/nullifier-reconciliation.mjs',
       generic: false,
     },
 ];

@@ -52,6 +52,7 @@ class ContractBoilerplateGenerator {
           `] : []),
 
         ...nullifiersRequired ? [`
+        event Nullifiers(uint256[] nullifiers);
         mapping(uint256 => uint256) public nullifiers;`] : [],
 
         ...(oldCommitmentAccessRequired ? [`
@@ -194,6 +195,9 @@ class ContractBoilerplateGenerator {
           uint n = newNullifiers[i];
           require(nullifiers[n] == 0, "Nullifier already exists");
           nullifiers[n] = n;
+        }
+        if (newNullifiers.length > 0) {
+          emit Nullifiers(newNullifiers);
         }`] : []),
 
         ...(checkNullifiers ? [`

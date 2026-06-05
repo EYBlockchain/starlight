@@ -295,6 +295,7 @@ export default function buildNode(nodeType: string, fields: any = {}): any {
     case 'BackupDataRetrieverBoilerplate':
     case 'BackupVariableBoilerplate':
     case 'IntegrationEncryptedListenerBoilerplate':
+    case 'BackupEncryptedListenerBoilerplate':
     case 'IntegrationTestFunction':
     case 'IntegrationApiServiceFunction':
     case 'IntegrationPublicApiServiceFunction':

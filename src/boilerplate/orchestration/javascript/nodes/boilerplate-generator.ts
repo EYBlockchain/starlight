@@ -516,6 +516,16 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
         stateVariables
       };
     }
+
+    case 'BackupEncryptedListenerBoilerplate': {
+      const { contractName, nullifiersRequired } = fields;
+      return {
+        nodeType,
+        contractName,
+        nullifiersRequired,
+      };
+    }
+
     case 'IntegrationTestFunction': {
       const {
         name,
@@ -580,25 +590,21 @@ export function buildBoilerplateNode(nodeType: string, fields: any = {}): any {
     }
 
     case 'BackupDataRetrieverBoilerplate': {
-      const {
-        contractName,
-        privateStates = [],
-      } = fields;
+      const { contractName, nullifiersRequired, privateStates = [] } = fields;
       return {
         nodeType,
         contractName,
+        nullifiersRequired,
         privateStates,
       };
     }
 
     case 'BackupVariableBoilerplate': {
-      const {
-        contractName,
-        privateStates = [],
-      } = fields;
+      const { contractName, nullifiersRequired, privateStates = [] } = fields;
       return {
         nodeType,
         contractName,
+        nullifiersRequired,
         privateStates,
       };
     }

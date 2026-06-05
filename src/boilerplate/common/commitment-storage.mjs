@@ -22,6 +22,114 @@ const keyDb =
   process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
 
 const PRINTABLE_ASCII_REGEX = /^[\x20-\x7E]*$/;
+const NULLIFIER_EVENTS_COLLECTION = `${COMMITMENTS_COLLECTION}_nullifiers`;
+
+async function getCommitmentsDb() {
+  const connection = await mongo.connection(MONGO_URL);
+  return connection.db(COMMITMENTS_DB);
+}
+
+async function getCommitmentsCollection() {
+  const db = await getCommitmentsDb();
+  return db.collection(COMMITMENTS_COLLECTION);
+}
+
+async function getNullifierEventsCollection() {
+  const db = await getCommitmentsDb();
+  return db.collection(NULLIFIER_EVENTS_COLLECTION);
+}
+
+function normaliseNullifier(nullifier) {
+  const normalised = generalise(nullifier);
+  return {
+    hex: normalised.hex(32),
+    integer: normalised.bigInt.toString(),
+  };
+}
+
+function normaliseNullifiers(nullifiers) {
+  const uniqueNullifiers = new Map();
+  for (const nullifier of nullifiers) {
+    if (nullifier === null || nullifier === undefined || nullifier === '')
+      continue; // eslint-disable-line no-continue
+    const normalised = normaliseNullifier(nullifier);
+    if (BigInt(normalised.integer) === 0n) continue; // eslint-disable-line no-continue
+    uniqueNullifiers.set(normalised.hex, normalised);
+  }
+  return Array.from(uniqueNullifiers.values());
+}
+
+async function hasSeenNullifier(nullifier) {
+  if (!nullifier) return false;
+  const nullifierEventsCollection = await getNullifierEventsCollection();
+  const normalised = normaliseNullifier(nullifier);
+  const knownNullifier = await nullifierEventsCollection.findOne({
+    _id: normalised.hex,
+  });
+  return !!knownNullifier;
+}
+
+export async function recordNullifiers(nullifiers, metadata = {}) {
+  const normalisedNullifiers = normaliseNullifiers(nullifiers);
+  if (normalisedNullifiers.length === 0) {
+    return {
+      nullifierCount: 0,
+      modifiedCount: 0,
+    };
+  }
+
+  const nullifierEventsCollection = await getNullifierEventsCollection();
+  const commitmentsCollection = await getCommitmentsCollection();
+  const now = new Date();
+  const blockNumber =
+    metadata.blockNumber === undefined || metadata.blockNumber === null
+      ? null
+      : Number(metadata.blockNumber);
+  const transactionHash = metadata.transactionHash ?? null;
+
+  await nullifierEventsCollection.bulkWrite(
+    normalisedNullifiers.map(nullifier => ({
+      updateOne: {
+        filter: { _id: nullifier.hex },
+        update: {
+          $set: {
+            nullifier: nullifier.hex,
+            integer: nullifier.integer,
+            blockNumber,
+            transactionHash,
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            createdAt: now,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false },
+  );
+
+  const nullifierValues = normalisedNullifiers.flatMap(nullifier => [
+    nullifier.hex,
+    nullifier.integer,
+  ]);
+  const updateResult = await commitmentsCollection.updateMany(
+    {
+      isNullified: false,
+      nullifier: { $in: nullifierValues },
+    },
+    {
+      $set: {
+        isNullified: true,
+      },
+    },
+  );
+
+  return {
+    nullifierCount: normalisedNullifiers.length,
+    modifiedCount: updateResult.modifiedCount || 0,
+  };
+}
 
 const formatPreimageValue = (rawValue, typeName = null) => {
   const generalisedValue = generalise(rawValue);
@@ -102,9 +210,15 @@ export function formatCommitment(commitment) {
 }
 
 export async function persistCommitment (data) {
-  const connection = await mongo.connection(MONGO_URL)
-  const db = connection.db(COMMITMENTS_DB)
-  return db.collection(COMMITMENTS_COLLECTION).insertOne(data)
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitmentData = { ...data };
+  if (commitmentData?.nullifier && !commitmentData.isNullified) {
+    commitmentData.isNullified = await hasSeenNullifier(
+      commitmentData.nullifier,
+    );
+  }
+  return db.collection(COMMITMENTS_COLLECTION).insertOne(commitmentData);
 }
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment (commitment) {
@@ -114,10 +228,8 @@ export async function storeCommitment (commitment) {
 
 // function to retrieve commitment with a specified stateVarId
 export async function getCommitmentsById(id) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const commitments = await db
-    .collection(COMMITMENTS_COLLECTION)
+  const commitmentsCollection = await getCommitmentsCollection();
+  const commitments = await commitmentsCollection
     .find({ 'preimage.stateVarId': generalise(id).hex(32) })
     .toArray();
   return commitments;
@@ -125,9 +237,8 @@ export async function getCommitmentsById(id) {
 
 // function to retrieve commitment with a specified stateVarId
 export async function getCurrentWholeCommitment(id) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne({
+  const commitmentsCollection = await getCommitmentsCollection();
+  const commitment = await commitmentsCollection.findOne({
     'preimage.stateVarId': generalise(id).hex(32),
     isNullified: false,
   });
@@ -136,12 +247,10 @@ export async function getCurrentWholeCommitment(id) {
 
 // function to retrieve commitment with a specified stateName
 export async function getCommitmentsByState(name, mappingKey = null) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
+  const commitmentsCollection = await getCommitmentsCollection();
   const query = { name: name };
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
-  const commitments = await db
-    .collection(COMMITMENTS_COLLECTION)
+  const commitments = await commitmentsCollection
     .find(query)
     .toArray();
   return commitments;
@@ -161,10 +270,8 @@ export async function deleteCommitmentsByState(name, mappingKey = null) {
 
 // function to retrieve all known nullified commitments
 export async function getNullifiedCommitments() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const commitments = await db
-    .collection(COMMITMENTS_COLLECTION)
+  const commitmentsCollection = await getCommitmentsCollection();
+  const commitments = await commitmentsCollection
     .find({ isNullified: true })
     .toArray();
   return commitments;
@@ -174,10 +281,8 @@ export async function getNullifiedCommitments() {
  * @returns {Promise<number>} The sum of the values ​​of all non-nullified commitments
  */
 export async function getBalance() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const commitments = await db
-    .collection(COMMITMENTS_COLLECTION)
+  const commitmentsCollection = await getCommitmentsCollection();
+  const commitments = await commitmentsCollection
     .find({ isNullified: false }) //  no nullified
     .toArray();
 
@@ -189,12 +294,10 @@ export async function getBalance() {
 }
 
 export async function getBalanceByState(name, mappingKey = null) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
+  const commitmentsCollection = await getCommitmentsCollection();
   const query = { name: name };
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
-  const commitments = await db
-    .collection(COMMITMENTS_COLLECTION)
+  const commitments = await commitmentsCollection
     .find(query)
     .toArray();
   let sumOfValues = 0;
@@ -210,10 +313,8 @@ export async function getBalanceByState(name, mappingKey = null) {
  * @returns all the commitments existent in this database.
  */
 export async function getAllCommitments() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const allCommitments = await db
-    .collection(COMMITMENTS_COLLECTION)
+  const commitmentsCollection = await getCommitmentsCollection();
+  const allCommitments = await commitmentsCollection
     .find()
     .toArray();
   return allCommitments;

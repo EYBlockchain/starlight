@@ -393,6 +393,39 @@ file.file = file.file.replace(/ENCRYPTEDVARIABLE_CODE/g, encryptedCode);
 return file.file;
 } 
 
+const prepareBackupEncryptedDataListener = (node: any) => {
+  const readPath = path.resolve(
+    fileURLToPath(import.meta.url),
+    '../../../../../src/boilerplate/common/backup-encrypted-data-listener.mjs',
+  );
+  const file = {
+    filepath: 'orchestration/backup-encrypted-data-listener.mjs',
+    file: fs.readFileSync(readPath, 'utf8'),
+  };
+  file.file = file.file.replace(/CONTRACT_NAME/g, node.contractName);
+  let nullifierReconciliationCodeFirst = ``;
+  if (node.nullifiersRequired) {
+    nullifierReconciliationCodeFirst += `
+    const nullifierSync = await reconcileNullifiedCommitments();
+      await this.startNullifierEventListener(
+        (nullifierSync?.lastCheckedBlock || startBlock - 1) + 1,
+      );`;
+  }
+  file.file = file.file.replace(
+    /NULLIFIER_RECONCILIATION_CODE_FIRST/g,
+    nullifierReconciliationCodeFirst,
+  );
+  let nullifierReconciliationCodeSecond = ``;
+  if (node.nullifiersRequired) {
+    nullifierReconciliationCodeSecond += `await reconcileNullifiedCommitments();`;
+  }
+  file.file = file.file.replace(
+    /NULLIFIER_RECONCILIATION_CODE_SECOND/g,
+    nullifierReconciliationCodeSecond,
+  );
+  return file.file;
+};
+
 /**
  * @param file - a generic migrations file skeleton to mutate
  * @param contextDirPath - a SetupCommonFilesBoilerplate node
@@ -619,6 +652,9 @@ const prepareStartupScript = (file: localFile, node: any) => {
 }
 
 const prepareBackupVariable = (node: any) => {
+  const reconcileNullifiers = node.nullifiersRequired
+    ? `await reconcileNullifiedCommitments();`
+    : ``;
   // import generic test skeleton
   let genericApiServiceFile: any = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */
   import config from "config";
@@ -630,8 +666,9 @@ const prepareBackupVariable = (node: any) => {
   import {
     storeCommitment,
     markNullified,
-    deleteCommitmentsByState
+    deleteCommitmentsByState,
   } from "./common/commitment-storage.mjs";
+  import { reconcileNullifiedCommitments } from "./common/nullifier-reconciliation.mjs";
   
   import { getContractInstance, getContractAddress } from "./common/contract.mjs";
   
@@ -645,7 +682,7 @@ const prepareBackupVariable = (node: any) => {
     scalarMult,
   } from "./common/number-theory.mjs";
   import { getLeafIndex} from "./common/timber.mjs";
-  import { waitForBackupListenerIdle } from "./common/backup-encrypted-data-listener.mjs";
+  import { waitForBackupListenerIdle } from "./backup-encrypted-data-listener.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -661,9 +698,10 @@ const prepareBackupVariable = (node: any) => {
 	await waitForBackupListenerIdle();
 	deleteCommitmentsByState(requestedName, null);
 
-	const instance = await getContractInstance("CONTRACT_NAME");
+  const instance = await getContractInstance("CONTRACT_NAME");`
+  + reconcileNullifiers + `
 
-	const backDataEvent = await instance.getPastEvents("EncryptedBackupData", {
+  const backDataEvent = await instance.getPastEvents("EncryptedBackupData", {
 		fromBlock: 0,
 		toBlock: "latest",
 	});
@@ -789,27 +827,6 @@ const prepareBackupVariable = (node: any) => {
            ", Possibly this commitment has a different public key and so decryption failed.");
           continue;
         }
-        let nullifier = poseidonHash([
-          BigInt(stateVarId.hex(32)),
-          BigInt(kp.secretKey.hex(32)),
-          BigInt(salt.hex(32))
-        ]);
-        let isNullified = false;
-        // Check if nullifiers method exists on the contract
-        if (instance.methods.nullifiers) {
-          let nullification = await instance.methods.nullifiers(nullifier.integer).call();
-          if (nullification === 0n) {
-            isNullified = false;
-          } else if (nullification === BigInt(nullifier.integer)) {
-            isNullified = true;
-          } else {
-            throw new Error("The nullifier value: " + nullifier.integer +
-              " does not match the on-chain nullifier: " + nullification);
-          }
-        } else {
-          console.log("Contract does not have nullifiers method, assuming not nullified");
-          isNullified = false;
-        }
         await storeCommitment({
           hash: newCommitment,
           name: name,
@@ -824,7 +841,7 @@ const prepareBackupVariable = (node: any) => {
             publicKey: kp.publicKey,
           },
           secretKey: kp.secretKey,
-          isNullified: isNullified,
+          isNullified: false,
         });
         console.log("Added commitment", newCommitment.hex(32));
       }
@@ -841,6 +858,9 @@ const prepareBackupVariable = (node: any) => {
 };
 
 const prepareBackupDataRetriever = (node: any) => {
+  const reconcileNullifiers = node.nullifiersRequired
+    ? `await reconcileNullifiedCommitments();`
+    : ``;
   // import generic test skeleton
   let genericApiServiceFile: any = `/* eslint-disable prettier/prettier, camelcase, prefer-const, no-unused-vars */
   import config from "config";
@@ -853,6 +873,7 @@ const prepareBackupDataRetriever = (node: any) => {
     storeCommitment,
     markNullified,
   } from "./common/commitment-storage.mjs";
+  import { reconcileNullifiedCommitments } from "./common/nullifier-reconciliation.mjs";
   
   import {
     getContractInstance,
@@ -870,7 +891,7 @@ const prepareBackupDataRetriever = (node: any) => {
   } from "./common/number-theory.mjs";
   import { getLeafIndex} from "./common/timber.mjs";
 
-  import { waitForBackupListenerIdle } from "./common/backup-encrypted-data-listener.mjs";
+  import { waitForBackupListenerIdle } from "./backup-encrypted-data-listener.mjs";
   
   const { generalise } = GN;
   const web3 = Web3.connection();
@@ -900,8 +921,9 @@ const prepareBackupDataRetriever = (node: any) => {
       console.error("Error emptying database:", err);
     }
   
-    const instance = await getContractInstance("CONTRACT_NAME");
-  
+    const instance = await getContractInstance("CONTRACT_NAME");`
+    + reconcileNullifiers + `
+
     const contractAddr = await getContractAddress("CONTRACT_NAME");
   
     const backDataEvent =   await instance.getPastEvents('EncryptedBackupData',{fromBlock: 0, toBlock: 'latest'} );
@@ -1024,27 +1046,6 @@ const prepareBackupDataRetriever = (node: any) => {
             ", Possibly this commitment has a different public key and so decryption failed.");
             continue;
           }
-          let nullifier = poseidonHash([
-            BigInt(stateVarId.hex(32)),
-            BigInt(kp.secretKey.hex(32)),
-            BigInt(salt.hex(32))
-          ])
-          let isNullified = false;
-          // Check if nullifiers method exists on the contract
-          if (instance.methods.nullifiers) {
-            let nullification = await instance.methods.nullifiers(nullifier.integer).call();
-            if (nullification === 0n) {
-              isNullified = false;
-            } else if (nullification === BigInt(nullifier.integer)) {
-              isNullified = true;
-            } else {
-              throw new Error("The nullifier value: " + nullifier.integer +
-                " does not match the on-chain nullifier: " + nullification);
-            }
-          } else {
-            console.log("Contract does not have nullifiers method, assuming not nullified");
-            isNullified = false;
-          }
           await storeCommitment({
             hash: newCommitment,
             name: name,
@@ -1059,7 +1060,7 @@ const prepareBackupDataRetriever = (node: any) => {
               publicKey: kp.publicKey,
             },
             secretKey: kp.secretKey,
-            isNullified: isNullified,
+            isNullified: false,
           });
           console.log("Added commitment", newCommitment.hex(32));
         }
@@ -1199,8 +1200,13 @@ export default function fileGenerator(node: any) {
     }
 
     case 'IntegrationEncryptedListenerBoilerplate': {
-       const  encryptedListener = prepareIntegrationEncryptedListener(node); 
+      const encryptedListener = prepareIntegrationEncryptedListener(node);
       return encryptedListener;
+    }
+
+    case 'BackupEncryptedListenerBoilerplate': {
+      const backupEncryptedListener = prepareBackupEncryptedDataListener(node);
+      return backupEncryptedListener;
     }
     default:
       throw new TypeError(`I dont recognise this type: ${node.nodeType}`);

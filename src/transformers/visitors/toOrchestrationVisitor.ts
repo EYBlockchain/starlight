@@ -373,6 +373,7 @@ const visitor = {
       node._newASTPointer = parent._newASTPointer;
       const contractName = `${node.name}Shield`;
       state.fullyPublicContract = true;
+      const { nullifiersRequired } = path.scope.indicators;
       if (scope.indicators.zkSnarkVerificationRequired) {
         const newNode = buildNode('File', {
           fileName: 'test',
@@ -419,6 +420,7 @@ const visitor = {
         nodes: [
           buildNode('BackupDataRetrieverBoilerplate', {
             contractName,
+            nullifiersRequired,
             privateStates: [],
           }),
         ],
@@ -430,6 +432,7 @@ const visitor = {
         nodes: [
           buildNode('BackupVariableBoilerplate', {
             contractName,
+            nullifiersRequired,
             privateStates: [],
           }),
         ],
@@ -447,6 +450,17 @@ const visitor = {
         });
         node._newASTPointer.push(newNode);
       }
+      newNode = buildNode('File', {
+        fileName: 'backup-encrypted-data-listener',
+        fileExtension: '.mjs',
+        nodes: [
+          buildNode('BackupEncryptedListenerBoilerplate', {
+            contractName,
+            nullifiersRequired,
+          }),
+        ],
+      });
+      node._newASTPointer.push(newNode);
       if (scope.indicators.newCommitmentsRequired) {
         const newNode = buildNode('EditableCommitmentCommonFilesBoilerplate');
         node._newASTPointer.push(newNode);
