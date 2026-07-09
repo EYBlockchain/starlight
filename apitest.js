@@ -899,7 +899,7 @@ describe('BucketsOfBalls Zapp', () => {
     ).to.equal(8);
   });
   it('Check commitments are correct after deleting and restoring from backup', async () => {
-    expect(res.BucketsOfBalls[7].body.commitments.length).to.equal(3);
+    expect(res.BucketsOfBalls[7].body.commitments.length).to.equal(4);
     expectNewLeavesEvent(res.BucketsOfBalls[8].body);
   });
   it('Test getBalanceByState', async () => {
