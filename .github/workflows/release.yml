@@ -4,6 +4,12 @@ on:
   push:
     branches: [master, beta]
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -11,15 +17,14 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: '14.17.0'
+          node-version: '20'
       - run: |
-          npm install
+          npm ci
           npx tsc
 
-      - uses: codfish/semantic-release-action@master
-        id: semantic
+      - name: Release
+        run: npx semantic-release@24
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: echo ${{ steps.semantic.outputs.release-version }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

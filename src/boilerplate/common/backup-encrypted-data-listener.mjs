@@ -6,14 +6,18 @@ import {
   getContractAddress,
   getContractInstance,
   registerKey,
-} from './contract.mjs';
-import { storeCommitment } from './commitment-storage.mjs';
+} from './common/contract.mjs';
+import { storeCommitment } from './common/commitment-storage.mjs';
+import {
+  processNullifierEventData,
+  reconcileNullifiedCommitments,
+} from './common/nullifier-reconciliation.mjs';
 import {
   decompressStarlightKey,
   decrypt,
   poseidonHash,
-} from './number-theory.mjs';
-import { getLeafIndex } from './timber.mjs';
+} from './common/number-theory.mjs';
+import { getLeafIndex } from './common/timber.mjs';
 
 const keyDb =
   process.env.KEY_DB_PATH || '/app/orchestration/common/db/key.json';
@@ -45,6 +49,7 @@ export default class BackupEncryptedDataEventListener {
     this.ethAddress = generalise(config.web3.options.defaultAccount);
     this.contractMetadata = {};
     this.eventSubscription = null; // Store as class property to prevent garbage collection
+    this.nullifierEventSubscription = null;
     this.heartbeatInterval = null;
     this.lastEventReceived = Date.now();
     this.lastProcessedBlock = 0; // Track last block we processed
@@ -114,6 +119,8 @@ export default class BackupEncryptedDataEventListener {
       console.log(
         `[BACKUP] Starting backup event listener from block ${startBlock}`,
       );
+
+      NULLIFIER_RECONCILIATION_CODE_FIRST
 
       // Store as class property to prevent garbage collection
       this.eventSubscription = this.instance.events[eventName]({
@@ -245,6 +252,47 @@ export default class BackupEncryptedDataEventListener {
     }
   }
 
+  async startNullifierEventListener(fromBlock) {
+    const eventName = 'Nullifiers';
+    const eventJsonInterface = this.instance._jsonInterface.find(
+      o => o.name === eventName && o.type === 'event',
+    );
+    if (!eventJsonInterface) {
+      throw new Error(
+        '[BACKUP] Contract ABI does not include the Nullifiers event required for nullifier reconciliation.',
+      );
+    }
+
+    this.nullifierEventSubscription = this.instance.events[eventName]({
+      fromBlock,
+      topics: [eventJsonInterface.signature],
+    });
+
+    this.nullifierEventSubscription.on('connected', subscriptionId => {
+      console.log(
+        `[BACKUP] Nullifier listener connected, ID: ${subscriptionId}`,
+      );
+    });
+
+    this.nullifierEventSubscription.on('data', async eventData => {
+      try {
+        await processNullifierEventData(eventData);
+      } catch (error) {
+        console.error('[BACKUP] Error processing nullifier event:', error);
+      }
+    });
+
+    this.nullifierEventSubscription.on('error', async error => {
+      console.error('[BACKUP] Nullifier subscription error:', error);
+      await this.reconnect();
+    });
+
+    this.nullifierEventSubscription.on('close', async () => {
+      console.log('[BACKUP] Nullifier subscription closed, reconnecting...');
+      await this.reconnect();
+    });
+  }
+
   async processBackupEventData(eventData) {
     activeBackupProcesses += 1;
     try {
@@ -367,33 +415,6 @@ export default class BackupEncryptedDataEventListener {
             );
             continue; // eslint-disable-line no-continue
           }
-          const nullifier = poseidonHash([
-            BigInt(stateVarId.hex(32)),
-            BigInt(kp.secretKey.hex(32)),
-            BigInt(salt.hex(32)),
-          ]);
-          let isNullified = false;
-          // Check if nullifiers method exists on the contract
-          if (this.instance.methods.nullifiers) {
-            // eslint-disable-next-line no-await-in-loop
-            const nullification = await this.instance.methods
-              .nullifiers(nullifier.integer)
-              .call();
-            if (nullification === 0n) {
-              isNullified = false;
-            } else if (nullification === BigInt(nullifier.integer)) {
-              isNullified = true;
-            } else {
-              throw new Error(
-                `The nullifier value: ${nullifier.integer} does not match the on-chain nullifier: ${nullification}`,
-              );
-            }
-          } else {
-            console.log(
-              'Contract does not have nullifiers method, assuming not nullified',
-            );
-            isNullified = false;
-          }
           try {
             // eslint-disable-next-line no-await-in-loop
             await storeCommitment({
@@ -410,7 +431,7 @@ export default class BackupEncryptedDataEventListener {
                 publicKey: kp.publicKey,
               },
               secretKey: kp.secretKey,
-              isNullified,
+              isNullified: false,
             });
             console.log('Added commitment', newCommitment.hex(32));
           } catch (e) {
@@ -423,6 +444,7 @@ export default class BackupEncryptedDataEventListener {
           }
         }
       }
+      NULLIFIER_RECONCILIATION_CODE_SECOND
     } finally {
       activeBackupProcesses = Math.max(0, activeBackupProcesses - 1);
     }
@@ -449,6 +471,19 @@ export default class BackupEncryptedDataEventListener {
         );
       }
       this.eventSubscription = null;
+    }
+
+    if (this.nullifierEventSubscription) {
+      try {
+        console.log('[BACKUP] Unsubscribing from nullifier subscription...');
+        await this.nullifierEventSubscription.unsubscribe();
+      } catch (e) {
+        console.log(
+          '[BACKUP] Error unsubscribing nullifier subscription:',
+          e.message,
+        );
+      }
+      this.nullifierEventSubscription = null;
     }
 
     // Reset last event timestamp

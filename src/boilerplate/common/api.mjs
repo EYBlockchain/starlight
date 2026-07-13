@@ -4,7 +4,7 @@ import { ServiceManager } from './api_services.mjs';
 import { Router } from './api_routes.mjs'; 
 import Web3 from './common/web3.mjs';
 ENCRYPTEDLISTENER_IMPORT
-import BackupEncryptedDataEventListener from './common/backup-encrypted-data-listener.mjs';
+import BackupEncryptedDataEventListener from './backup-encrypted-data-listener.mjs';
 
 function gracefulshutdown() {
   console.log('Shutting down');

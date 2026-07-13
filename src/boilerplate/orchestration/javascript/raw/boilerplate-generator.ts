@@ -43,6 +43,9 @@ class BoilerplateGenerator {
           ${stateVarIds.join('\n')}
           \nlet ${stateName}_commitmentExists = true;
           \nconst ${stateName}_commitment = await getCurrentWholeCommitment(${stateName}_stateVarId);
+          \nif (!${stateName}_commitment) {
+          \n\tthrow new Error('Unable to find a non-nullified ${stateName} commitment with state id ' + ${stateName}_stateVarId + '.');
+          \n}
           \nconst ${stateName}_preimage = ${stateName}_commitment.preimage;
           \nconst ${stateName} = generalise(${stateName}_preimage.value);`];
         default:
@@ -1093,8 +1096,8 @@ zappFilesBoilerplate = () => {
       generic: false,
     },
     {
-      readPath: pathPrefix + '/backup-encrypted-data-listener.mjs',
-      writePath: './orchestration/common/backup-encrypted-data-listener.mjs',
+      readPath: pathPrefix + '/nullifier-reconciliation.mjs',
+      writePath: './orchestration/common/nullifier-reconciliation.mjs',
       generic: false,
     },
 ];

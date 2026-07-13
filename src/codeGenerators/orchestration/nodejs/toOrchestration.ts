@@ -330,8 +330,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
     case 'BackupVariableBoilerplate':
       // Separate files are handled by the fileGenerator
       return fileGenerator(node);
-    case 'IntegrationEncryptedListenerBoilerplate':  
-    return fileGenerator(node);
+    case 'IntegrationEncryptedListenerBoilerplate':
+      return fileGenerator(node);
+    case 'BackupEncryptedListenerBoilerplate':
+      return fileGenerator(node);
     case 'InitialisePreimage':
     case 'InitialiseKeys':
     case 'ReadPreimage':
