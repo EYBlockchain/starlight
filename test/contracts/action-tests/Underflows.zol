@@ -30,6 +30,11 @@ contract MyContract {
         a = a - amount;
     }
 
+    function requireShortCircuitOr(secret uint256 amount, bool skip) public {
+        require(skip || a - amount >= 0, "skip or no underflow");
+        a = a;
+    }
+
     function unknownMappingDecSub(secret uint256 value, secret uint256 amount) public {
         unknown balances[msg.sender] -= value - amount;
     }

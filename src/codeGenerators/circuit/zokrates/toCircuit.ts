@@ -32,10 +32,25 @@ const underflowGuardConditions = (
     // If the node is a binary operation with operator "-", we return a guard to prevent underflows, analogously to solidity,
     // otherwise we traverse the child nodes
     case 'BinaryOperation': {
-      const subExpressionConditions = [
-        ...underflowGuardConditions(node.leftExpression, codeGeneratorState, seen),
-        ...underflowGuardConditions(node.rightExpression, codeGeneratorState, seen),
-      ];
+      const leftExpressionConditions = underflowGuardConditions(node.leftExpression, codeGeneratorState, seen);
+      const rightExpressionConditions = underflowGuardConditions(node.rightExpression, codeGeneratorState, seen);
+
+      if (node.operator === '&&') {
+        const leftExpression = removeTrailingSemicolon(codeGenerator(node.leftExpression, codeGeneratorState));
+        return [
+          ...leftExpressionConditions,
+          ...rightExpressionConditions.map(guard => `!(${leftExpression}) || (${guard})`),
+        ];
+      }
+      if (node.operator === '||') {
+        const leftExpression = removeTrailingSemicolon(codeGenerator(node.leftExpression, codeGeneratorState));
+        return [
+          ...leftExpressionConditions,
+          ...rightExpressionConditions.map(guard => `(${leftExpression}) || (${guard})`),
+        ];
+      }
+
+      const subExpressionConditions = [...leftExpressionConditions, ...rightExpressionConditions];
       if (node.operator !== '-') return subExpressionConditions;
       return [
         ...subExpressionConditions,
