@@ -4,6 +4,7 @@ import config from 'config';
 import { generalise } from 'general-number';
 import { getContractAddress, getContractInstance, registerKey } from './common/contract.mjs';
 import { storeCommitment, formatCommitment, persistCommitment } from './common/commitment-storage.mjs';
+import { processNullifierEventData } from './common/nullifier-reconciliation.mjs';
 import { decrypt, poseidonHash, } from './common/number-theory.mjs';
 
 const keyDb =
@@ -74,6 +75,7 @@ export default class EncryptedDataEventListener {
     const nullifierEvents = await instance.getPastEvents('Nullifiers', {
       fromBlock: this.contractMetadata.blockNumber || 1
     })
+    await Promise.all(nullifierEvents.map(processNullifierEventData))
     const nullifiers = nullifierEvents
       .flatMap(e => e.returnValues.nullifiers)
     return Promise.all(
