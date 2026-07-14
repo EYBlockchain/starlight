@@ -19,7 +19,7 @@ Do note that `LoanSimple.zol` don't currently compile - we are actively working 
 
  - Any combination of:
     - Any number of functions:
-      - Standalone functions can be compiled, along with internal function calls as long as secrecy is preserved (e.g. don't pass a secret parameter to a public function).
+      - Standalone functions can be compiled, along with internal function calls as long as secrecy is preserved (e.g. don't pass a secret parameter to a public function). Internal function calls currently only support arguments passed as identifiers, or as direct member accesses on struct values.
       - External function calls are supported, as long as secret states aren't involved.
       - Constructors are supported, but be aware that the output shield contract will contain a constructor combining the `.zol` constructor and some extra functionality.
       - Functions can have any number of secret or public parameters of the types below.
@@ -62,6 +62,8 @@ Here we summarise the as of yet unsupported Solidity syntax.
   - These create a very complex commitment structure. This includes structs with properties of type `mapping`, dynamic or fixed-size `array` (e.g., `uint256[]`, `address[3]`), or other structs. We may work on this in future if there is high demand for this feature.
 - **Arrays of structs:**
   - Consider using mappings to structs, which are supported. 
+- **Internal calls with computed or special-expression arguments:**
+  - Internal function call arguments must currently be identifiers, such as `add(value)`, or direct member accesses on struct values, such as `add(value.amount)`. Expressions such as `add(a + b)`, `add(msg.sender)`, casts, and array or mapping index accesses are not supported. These patterns throw a `TODOError`: `TODO: zappify doesn't yet support this feature: Unsupported argument N in internal function call 'name'. Only identifiers and struct member accesses are currently supported.`
 - **While statements:**
   - These are unsupported in zero-knowledge proof circuits because they cannot handle dynamic loops.
 - **Assembly:**
