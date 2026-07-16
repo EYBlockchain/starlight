@@ -335,29 +335,20 @@ class BoilerplateGenerator {
       ];
     },
 
-    postStatements({ name: x, isWhole, isNullified, newCommitmentValue, structProperties, structPropertiesTypes, typeName }): string[] {
+    postStatements({ name: x, isWhole, isNullified, structProperties, structPropertiesTypes, typeName }): string[] {
       // if (!isWhole && !newCommitmentValue) throw new Error('PATH');
       let y = isWhole ? x : x.slice(0, -2);
       const lines: string[] = [];
       if (!isWhole && isNullified) {
         // decrement
-        const i = parseInt(x.slice(-1), 10);
-        const x0 = x.slice(0, -1) + `${i-2}`;
-        const x1 = x.slice(0, -1) + `${i-1}`;
         if (!structProperties) {
           lines.push(
-            `assert(${y} >0);
-            // TODO: assert no under/overflows
-
-            field ${x}_newCommitment_value_field = ${y};`
+            `field ${x}_newCommitment_value_field = ${y};`
           );
         } else {
           // TODO types for each structProperty
           lines.push(
-            `${structProperties.map(p => newCommitmentValue[p] === '0' ? '' : `assert(${y}.${p} > 0);`).join('\n')}
-            // TODO: assert no under/overflows
-
-            ${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} };`
+            `${typeName} ${x}_newCommitment_value = ${typeName} { ${structProperties.map(p => ` ${p}: ${y}.${p}`)} };`
           );
         }
       } else {
@@ -551,9 +542,15 @@ class BoilerplateGenerator {
     statements({ name: x, subtrahend, newCommitmentValue, structProperties, memberName}): string[] {
       if (subtrahend.decrementType === '-='){
         if (structProperties) {
-          return [`${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue});`]
+          return [
+            `assert(${x}.${memberName} >= (${newCommitmentValue}));
+          ${x}.${memberName} = ${x}.${memberName} - (${newCommitmentValue});`,
+          ];
         }
-        return [`${x} =  ${x} - (${newCommitmentValue});`];
+        return [
+          `assert(${x} >= (${newCommitmentValue}));
+        ${x} =  ${x} - (${newCommitmentValue});`,
+        ];
       } else if (subtrahend.decrementType === '='){
         if (structProperties) {
           return [`${x}.${memberName} = ${newCommitmentValue};`]

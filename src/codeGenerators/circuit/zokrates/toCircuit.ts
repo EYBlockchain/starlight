@@ -16,6 +16,107 @@ const keepOneTrailingSemicolon = (code: string) => {
   return code.endsWith('}') ? code : code.replace(/;+$/, '') + ';';
 };
 
+// Traverses a node to check for any guards that are necessary to prevent underflows
+const underflowGuardConditions = (
+  node: any,
+  codeGeneratorState: any,
+  seen = new Set<any>(),
+): string[] => {
+  if (!node) return [];
+  if (Array.isArray(node)) return node.flatMap(child => underflowGuardConditions(child, codeGeneratorState, seen));
+  if (typeof node !== 'object') return [];
+  if (seen.has(node)) return [];
+  seen.add(node);
+
+  switch (node.nodeType) {
+    // If the node is a binary operation with operator "-", we return a guard to prevent underflows, analogously to solidity,
+    // otherwise we traverse the child nodes
+    case 'BinaryOperation': {
+      const leftExpressionConditions = underflowGuardConditions(node.leftExpression, codeGeneratorState, seen);
+      const rightExpressionConditions = underflowGuardConditions(node.rightExpression, codeGeneratorState, seen);
+
+      if (node.operator === '&&') {
+        const leftExpression = removeTrailingSemicolon(codeGenerator(node.leftExpression, codeGeneratorState));
+        return [
+          ...leftExpressionConditions,
+          ...rightExpressionConditions.map(guard => `!(${leftExpression}) || (${guard})`),
+        ];
+      }
+      if (node.operator === '||') {
+        const leftExpression = removeTrailingSemicolon(codeGenerator(node.leftExpression, codeGeneratorState));
+        return [
+          ...leftExpressionConditions,
+          ...rightExpressionConditions.map(guard => `(${leftExpression}) || (${guard})`),
+        ];
+      }
+
+      const subExpressionConditions = [...leftExpressionConditions, ...rightExpressionConditions];
+      if (node.operator !== '-') return subExpressionConditions;
+      return [
+        ...subExpressionConditions,
+        `${codeGenerator(node.leftExpression, codeGeneratorState)} >= ${codeGenerator(node.rightExpression, codeGeneratorState)}`,
+      ];
+    }
+
+    // We only need to prevent underflows in if statements if the branch of the if statement is taken
+    case 'Conditional': {
+      const condition = removeTrailingSemicolon(codeGenerator(node.condition, codeGeneratorState));
+      return [
+        ...underflowGuardConditions(node.condition, codeGeneratorState, seen),
+        ...underflowGuardConditions(node.trueExpression, codeGeneratorState, seen).map(guard => `!(${condition}) || (${guard})`),
+        ...underflowGuardConditions(node.falseExpression, codeGeneratorState, seen).map(guard => `(${condition}) || (${guard})`),
+      ];
+    }
+
+    case 'UnaryOperation': {
+      const subExpressionConditions = underflowGuardConditions(
+        node.subExpression,
+        codeGeneratorState,
+        seen,
+      );
+      if (node.operator !== '--') return subExpressionConditions;
+      return [
+        ...subExpressionConditions,
+        `${codeGenerator(node.subExpression, codeGeneratorState)} >= 1`,
+      ];
+    }
+
+    default:
+      return Object.values(node).flatMap(child => underflowGuardConditions(child, codeGeneratorState, seen));
+  }
+};
+
+const underflowGuardAssertions = (node: any, codeGeneratorState: any) => {
+  return underflowGuardConditions(node, codeGeneratorState)
+    .map(guard => `        assert(${guard});`)
+    .join('\n');
+};
+
+// Adds a guard to the statement to prevent underflows
+const withUnderflowGuardAssertions = (node: any, statement: string, codeGeneratorState: any) => {
+  const guards = underflowGuardAssertions(node, codeGeneratorState);
+  return guards ? `${guards}\n${statement}` : statement;
+};
+
+const assignmentStatement = (node: any, codeGeneratorState: any) =>
+  `${codeGenerator(node.leftHandSide, codeGeneratorState)} ${node.operator} ${codeGenerator(node.rightHandSide, codeGeneratorState)};`;
+
+// Return an underflow guard that only is enforced if a condition is satisfied 
+const conditionalUnderflowGuardAssertions = (
+  node: any,
+  condition: string,
+  activeWhenTrue: boolean,
+  codeGeneratorState: any,
+) => {
+  return underflowGuardConditions(node, codeGeneratorState)
+    .map(guard =>
+      activeWhenTrue
+        ? `\n            assert(!(${condition}) || (${guard}));`
+        : `\n            assert((${condition}) || (${guard}));`,
+    )
+    .join('');
+};
+
 function poseidonLibraryChooser(fileObj: string) {
   if (!fileObj.includes('poseidon')) return fileObj;
   let poseidonFieldCount = 0;
@@ -241,12 +342,12 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
       if(node.initialValue?.nodeType === 'InternalFunctionCall'){
         if(!declarations) return ;
         if(node.initialValue?.expression?.nodeType === 'BinaryOperation')
-        return `${declarations} = ${codeGenerator(node.initialValue.expression, codeGeneratorState)};`;
-        return `${declarations} = ${node.initialValue.name};`;
+        return withUnderflowGuardAssertions(node.initialValue, `${declarations} = ${codeGenerator(node.initialValue.expression, codeGeneratorState)};`, codeGeneratorState);
+        return withUnderflowGuardAssertions(node.initialValue, `${declarations} = ${node.initialValue.name};`, codeGeneratorState);
       } 
       const initialValue = codeGenerator(node.initialValue, codeGeneratorState);
 
-      return `${declarations} = ${initialValue};`;
+      return withUnderflowGuardAssertions(node.initialValue, `${declarations} = ${initialValue};`, codeGeneratorState);
     }
 
     case 'ElementaryTypeName':
@@ -262,6 +363,21 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
 
     case 'ExpressionStatement': {
       if (node.isVarDec) {
+        if (node.expression?.nodeType === 'Assignment') {
+          const declarationType =
+            node.expression?.leftHandSide?.typeName === 'bool'
+              ? 'bool'
+              : 'field';
+          return withUnderflowGuardAssertions(
+            node.expression,
+            `
+        ${declarationType} mut ${assignmentStatement(
+              node.expression,
+              codeGeneratorState,
+            )}`,
+            codeGeneratorState,
+          );
+        }
         if (node.expression?.leftHandSide?.typeName === 'bool'){
           return `
           bool mut ${codeGenerator(node.expression, codeGeneratorState)}`;
@@ -295,13 +411,21 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
       return  ` ` ;
 
     case 'Assignment':
-      return `${codeGenerator(node.leftHandSide, codeGeneratorState)} ${node.operator} ${codeGenerator(node.rightHandSide, codeGeneratorState)};`;
+      return withUnderflowGuardAssertions(
+        node,
+        assignmentStatement(node, codeGeneratorState),
+        codeGeneratorState,
+      );
 
     case 'UnaryOperation':
       if (node.subExpression?.typeName?.name === 'bool' && node.operator === '!'){
         return `${node.operator}${node.subExpression.name};`;
       }
-      return `${codeGenerator(node.initialValue, codeGeneratorState)} = ${codeGenerator(node.subExpression, codeGeneratorState)} ${node.operator[0]} 1;`;
+      return withUnderflowGuardAssertions(
+        node,
+        `${codeGenerator(node.initialValue, codeGeneratorState)} = ${codeGenerator(node.subExpression, codeGeneratorState)} ${node.operator[0]} 1;`,
+        codeGeneratorState,
+      );
 
     case 'BinaryOperation':
       if (node.operator === '/') {
@@ -361,6 +485,8 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
         node.condition.rightExpression.name = node.condition.rightExpression.name.replace('_temp','');
         if(node.condition.leftExpression.nodeType == 'Identifier')
         node.condition.leftExpression.name = node.condition.leftExpression.name.replace('_temp','');
+        const conditionUnderflowGuards = underflowGuardAssertions(node.condition, codeGeneratorState);
+        if (conditionUnderflowGuards) initialStatements += `\n${conditionUnderflowGuards}`;
       initialStatements+= `
       assert(!(${codeGenerator(node.condition, codeGeneratorState)}));`;
       return initialStatements;
@@ -374,11 +500,17 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
         ${varDec} ${codeGenerator(elt, codeGeneratorState)}_temp = ${codeGenerator(elt, codeGeneratorState)};`;
         }
       });
+      const condition = removeTrailingSemicolon(codeGenerator(node.condition, codeGeneratorState));
+      // Check for underflow in the condition of the if statement
+      const conditionUnderflowGuards = underflowGuardAssertions(node.condition, codeGeneratorState);
+      if (conditionUnderflowGuards) initialStatements += `\n${conditionUnderflowGuards}`;
       for (let i =0; i<node.trueBody.length; i++) {
         // We may have a statement that is not within the If statement but included due to the ordering (e.g. b_1 =b)
         if (node.trueBody[i].outsideIf) {
           trueStatements += `${codeGenerator(node.trueBody[i], codeGeneratorState)}`;
         } else {
+          // we need the underflow body only in the case that the true body is executed
+          trueStatements += conditionalUnderflowGuardAssertions(node.trueBody[i], condition, true, codeGeneratorState);
           if (node.trueBody[i].expression.nodeType === 'UnaryOperation'){
             trueStatements+= `
             ${codeGenerator(node.trueBody[i].expression.subExpression, codeGeneratorState)} = if (${removeTrailingSemicolon(codeGenerator(node.condition, codeGeneratorState))}) { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression, codeGeneratorState))} ${node.trueBody[i].expression.operator[0]} 1 } else { ${removeTrailingSemicolon(codeGenerator(node.trueBody[i].expression.subExpression, codeGeneratorState))} };`
@@ -392,6 +524,8 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
         if (node.falseBody[j].outsideIf) {
           falseStatements += `${codeGenerator(node.falseBody[j], codeGeneratorState)}`;
         } else {
+          // we need the underflow body only in the case that the false body is executed
+          falseStatements += conditionalUnderflowGuardAssertions(node.falseBody[j], condition, false, codeGeneratorState);
           if (node.falseBody[j].expression.nodeType === 'UnaryOperation'){
             falseStatements+= `
             ${codeGenerator(node.falseBody[j].expression.subExpression, codeGeneratorState)} = if (${removeTrailingSemicolon(codeGenerator(node.condition, codeGeneratorState))}) { ${removeTrailingSemicolon(codeGenerator(node.falseBody[j].expression.subExpression, codeGeneratorState))} }  else  { ${codeGenerator(node.falseBody[j].expression.subExpression, codeGeneratorState)} ${node.falseBody[j].expression.operator[0]} 1 };`;
@@ -408,14 +542,22 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
 
       case 'ForStatement':
         switch (node.initializationExpression.nodeType) {
-          case 'ExpressionStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression, codeGeneratorState)} in ${codeGenerator(node.initializationExpression.expression.rightHandSide, codeGeneratorState)}..${node.condition.rightExpression.value} {
+          case 'ExpressionStatement': {
+            const initialValue = node.initializationExpression.expression.rightHandSide;
+            // Check for any underflow guards necessary in the initialization, because they are
+            // not covered elsewhere
+            return withUnderflowGuardAssertions(initialValue, `for u32 ${codeGenerator(node.condition.leftExpression, codeGeneratorState)} in ${codeGenerator(initialValue, codeGeneratorState)}..${node.condition.rightExpression.value} {
             ${keepOneTrailingSemicolon(codeGenerator(node.body, codeGeneratorState))}
-            }`;
-          case 'VariableDeclarationStatement':
-            return `for u32 ${codeGenerator(node.condition.leftExpression, codeGeneratorState)} in ${codeGenerator(node.initializationExpression.initialValue, codeGeneratorState)}..${node.condition.rightExpression.value} {
+            }`, codeGeneratorState);
+          }
+          case 'VariableDeclarationStatement': {
+            const initialValue = node.initializationExpression.initialValue;
+            // Check for any underflow guards necessary in the initialization, because they are
+            // not covered elsewhere
+            return withUnderflowGuardAssertions(initialValue, `for u32 ${codeGenerator(node.condition.leftExpression, codeGeneratorState)} in ${codeGenerator(initialValue, codeGeneratorState)}..${node.condition.rightExpression.value} {
             ${keepOneTrailingSemicolon(codeGenerator(node.body, codeGeneratorState))}
-            }`;
+            }`, codeGeneratorState);
+          }
           default:
             break;
         }
@@ -433,20 +575,41 @@ codeGeneratorState.wrapperFunctions.set(functionName, wrapperFunction);
     case 'Assert':
       // only happens if we have a single bool identifier which is a struct property
       // these get converted to fields so we need to assert == 1 rather than true
-      if (node.arguments[0].isStruct && node.arguments[0].nodeType === "MemberAccess") return `
-        assert(${node.arguments.flatMap(codeGenerator)} == 1);`;
-      return `
-        assert(${node.arguments.flatMap(codeGenerator)});`;
+      if (node.arguments[0].isStruct && node.arguments[0].nodeType === "MemberAccess") {
+        return withUnderflowGuardAssertions(
+          node,
+          `
+        assert(${node.arguments.flatMap(codeGenerator)} == 1);`,
+          codeGeneratorState,
+        );
+      }
+      return withUnderflowGuardAssertions(
+        node,
+        `
+        assert(${node.arguments.flatMap(codeGenerator)});`,
+        codeGeneratorState,
+      );
 
     case 'Boilerplate':
       return Circuitbp.generateBoilerplate(node);
 
     case 'BoilerplateStatement': {
       let newComValue = '';
-      if (node.bpType === 'incrementation') newComValue  = codeGenerator(node.addend, codeGeneratorState);
-      if (node.bpType === 'decrementation') newComValue  = codeGenerator(node.subtrahend, codeGeneratorState);
+      let guardNode;
+      if (node.bpType === 'incrementation') {
+        guardNode = node.addend;
+        newComValue  = codeGenerator(node.addend, codeGeneratorState);
+      }
+      if (node.bpType === 'decrementation') {
+        guardNode = node.subtrahend;
+        newComValue  = codeGenerator(node.subtrahend, codeGeneratorState);
+      }
       node.newCommitmentValue = newComValue;
-      return Circuitbp.generateBoilerplate(node);
+      // Check for underflows in the incrementation/ decrementation,
+      // e.g. for a += b -c, check b >= c
+      return guardNode
+        ? withUnderflowGuardAssertions(guardNode, Circuitbp.generateBoilerplate(node), codeGeneratorState)
+        : Circuitbp.generateBoilerplate(node);
     }
 
     // And if we haven't recognized the node, we'll throw an error.

@@ -92,6 +92,7 @@ def main(
 
     // prepare secret state 'newCommitments' for commitments
     field newCommitment_0_value_field = value;
+    assert(oldCommitment_0_value >= value);
     field newCommitment_1_value_field = oldCommitment_0_value - value;
 
     // preimage check - newCommitment_commitment

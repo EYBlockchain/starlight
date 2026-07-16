@@ -1,0 +1,145 @@
+// SPDX-License-Identifier: CC0
+
+pragma solidity ^0.8.0;
+
+contract MyContract {
+
+    secret uint256 private a;
+    secret mapping(address => uint256) private balances;
+    uint256 public publicCounter;
+
+    function assign(secret uint256 value) public {
+        a = value;
+    }
+
+    function compoundSub(secret uint256 amount) public {
+        a -= amount;
+    }
+
+    function assignmentSub(secret uint256 amount) public {
+        a = a - amount;
+    }
+
+    function localDeclarationSub(secret uint256 amount) public {
+        secret uint256 remaining = a - amount;
+        a = remaining;
+    }
+
+    function requireSub(secret uint256 amount, secret uint256 minimum) public {
+        require(a - amount >= minimum, "a - amount too low");
+        a = a - amount;
+    }
+
+    function requireShortCircuitOr(secret uint256 amount, bool skip) public {
+        require(skip || a - amount >= 0, "skip or no underflow");
+        a = a;
+    }
+
+    function unknownMappingDecSub(secret uint256 value, secret uint256 amount) public {
+        unknown balances[msg.sender] -= value - amount;
+    }
+
+    function unknownMappingAddNestedSub(secret uint256 value, secret uint256 amount, secret uint256 fee) public {
+        unknown balances[msg.sender] += value - (amount - fee);
+    }
+
+    function unknownMappingNestedSub(secret uint256 value, secret uint256 amount, secret uint256 fee) public {
+        unknown balances[msg.sender] -= value - (amount - fee);
+    }
+
+    function publicUnaryIncrementThenSecret(secret uint256 value) public {
+        publicCounter++;
+        known a += value + publicCounter;
+    }
+
+    function publicUnaryDecrementThenSecret(secret uint256 value) public {
+        publicCounter--;
+        known a += value + publicCounter;
+    }
+
+     // The following two functions do not compile because of a bug where threshold is not a circuit parameter
+    //function publicUnaryDecrementTrueBranchThenSecret(secret uint256 value, uint256 threshold) public {
+    //    if (threshold > 0) {
+    //        publicCounter--;
+    //    }
+    //    known a += value + publicCounter;
+    //}
+
+    //function publicUnaryDecrementFalseBranchThenSecret(secret uint256 value, uint256 threshold) public {
+    //    if (threshold > 0) {
+    //        publicCounter++;
+    //    } else {
+    //        publicCounter--;
+    //    }
+    //    known a += value + publicCounter;
+    //}
+
+    // The following four functions do not compile because of a bug where start is not a circuit parameter
+    //function localUnaryIncrementThenSecret(secret uint256 value, uint256 start) public {
+    //    uint256 counter = start;
+    //    counter++;
+    //    known a += value + counter;
+    //}
+
+    //function localUnaryDecrementThenSecret(secret uint256 value, uint256 start) public {
+    //    uint256 counter = start;
+    //    counter--;
+    //    known a += value + counter;
+    //}
+
+    //function localUnaryDecrementTrueBranchThenSecret(secret uint256 value, uint256 start, uint256 threshold) public {
+    //    uint256 counter = start;
+    //    if (threshold > 0) {
+    //        counter--;
+    //    }
+    //    known a += value + counter;
+    //}
+
+    //function localUnaryDecrementFalseBranchThenSecret(secret uint256 value, uint256 start, uint256 threshold) public {
+    //    uint256 counter = start;
+    //    if (threshold > 0) {
+    //        counter++;
+    //    } else {
+    //        counter--;
+    //    }
+    //    known a += value + counter;
+    //}
+
+    function addThenSub(secret uint256 amount1, secret uint256 amount) public {
+        a = a + amount1 - amount;
+    }
+
+    function subThenAdd(secret uint256 amount, secret uint256 amount1) public {
+        a = a - amount + amount1;
+    }
+
+    function parenthesizedSub(secret uint256 amount1, secret uint256 amount) public {
+        a = a + (amount1 - amount);
+    }
+
+    function parenthesizedSub2(secret uint256 amount1, secret uint256 amount) public {
+        a = a - (amount1 - amount);
+    }
+
+    function branchSub(secret uint256 threshold, secret uint256 amount) public {
+        if (a > threshold) {
+            a -= amount;
+        }
+    }
+
+    // Does not compile because of a bug where start is not a circuit parameter
+    //function loopInitSub(secret uint256 value, uint256 start, uint256 amount) public {
+    //    for (uint256 index = start - amount; index < 5; index++) {
+    //        known a += value;
+    //    }
+    //}
+
+    // Does not compile because of a bug where a_temp is not defined
+    //function revertIfSub(secret uint256 amount, secret uint256 minimum) public {
+    //    if (a - amount < minimum) {
+    //        revert();
+    //    }
+    //    known a += 1;
+    //}
+
+}
