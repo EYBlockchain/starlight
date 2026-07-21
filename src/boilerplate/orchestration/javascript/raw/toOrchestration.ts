@@ -125,6 +125,12 @@ function transformToIntegerAccess(para: string): string {
   }
 };
 
+const publicKeyLookupWithFallback = (stateName: string, addressExpression: string) => `_${stateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(${addressExpression}).call()) : ${stateName}_newOwnerPublicKey;
+            \nif (${stateName}_newOwnerPublicKey.bigInt === 0n) {
+              console.log('WARNING: Public key not found on chain - using your public key');
+              ${stateName}_newOwnerPublicKey = publicKey;
+            }`;
+
 export const generateProofBoilerplate = (node: any) => {
   const output: (string[] | string)[] = [];
   const enc: any[][] = [];
@@ -347,19 +353,14 @@ export const preimageBoilerPlate = (node: any) => {
           newOwnerStatment = `publicKey;`;
         } else if (stateNode.mappingOwnershipType === 'key') {
           // the stateVarId[1] is the mapping key
-          newOwnerStatment = `generalise(await instance.methods.zkpPublicKeys(${stateNode.stateVarId[1]}.hex(20)).call()); // address should be registered`;
+          newOwnerStatment = publicKeyLookupWithFallback(privateStateName, `${stateNode.stateVarId[1]}.hex(20)`);
         } else if (stateNode.mappingOwnershipType === 'value') {
           if (stateNode.reinitialisable){
             newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? publicKey : ${privateStateName}_newOwnerPublicKey;`;
           } else {
             // TODO test below
             // if the private state is an address (as here) its still in eth form - we need to convert
-            newOwnerStatment = `await instance.methods.zkpPublicKeys(${privateStateName}.hex(20)).call();
-            \nif (${privateStateName}_newOwnerPublicKey === 0) {
-              console.log('WARNING: Public key for given eth address not found - reverting to your public key');
-              ${privateStateName}_newOwnerPublicKey = publicKey;
-            }
-            \n${privateStateName}_newOwnerPublicKey = generalise(${privateStateName}_newOwnerPublicKey);`;
+            newOwnerStatment = publicKeyLookupWithFallback(privateStateName, `${privateStateName}.hex(20)`);
           }
         } else {
           if(stateNode.isSharedSecret)
@@ -374,7 +375,7 @@ export const preimageBoilerPlate = (node: any) => {
         if (stateNode.isSharedSecret) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? sharedPublicKey : ${privateStateName}_newOwnerPublicKey;`;
         } else if (!stateNode.ownerIsSecret && !stateNode.ownerIsParam) {
-          newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? generalise(await instance.methods.zkpPublicKeys(await instance.methods.${newOwner}().call()).call()) : ${privateStateName}_newOwnerPublicKey;`;
+          newOwnerStatment = publicKeyLookupWithFallback(privateStateName, `await instance.methods.${newOwner}().call()`);
         } else if (stateNode.ownerIsParam && newOwner) {
           newOwnerStatment = `_${privateStateName}_newOwnerPublicKey === 0 ? ${newOwner} : ${privateStateName}_newOwnerPublicKey;`;
         } else {

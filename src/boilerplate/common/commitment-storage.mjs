@@ -24,6 +24,45 @@ const keyDb =
 const PRINTABLE_ASCII_REGEX = /^[\x20-\x7E]*$/;
 const NULLIFIER_EVENTS_COLLECTION = `${COMMITMENTS_COLLECTION}_nullifiers`;
 
+function normalisePublicKey(publicKey) {
+  if (publicKey === null || publicKey === undefined || publicKey === '')
+    return null;
+  const normalised = generalise(publicKey);
+  if (normalised.bigInt === 0n) return null;
+  return normalised.hex(32);
+}
+
+function normalisePublicKeys(publicKeys) {
+  const values = Array.isArray(publicKeys) ? publicKeys : [publicKeys];
+  return Array.from(
+    new Set(values.map(normalisePublicKey).filter(publicKey => publicKey)),
+  );
+}
+
+function getLocalPublicKeys() {
+  if (!fs.existsSync(keyDb)) {
+    throw new Error(
+      `Cannot determine owned commitments: key DB not found at ${keyDb}`,
+    );
+  }
+  const keys = JSON.parse(
+    fs.readFileSync(keyDb, 'utf-8', err => {
+      console.log(err);
+    }),
+  );
+  return normalisePublicKeys([keys.publicKey, keys.sharedPublicKey]);
+}
+
+function ownedCommitmentQuery() {
+  const ownedPublicKeys = getLocalPublicKeys();
+  return {
+    'preimage.publicKey':
+      ownedPublicKeys.length === 1
+        ? ownedPublicKeys[0]
+        : { $in: ownedPublicKeys },
+  };
+}
+
 async function getCommitmentsDb() {
   const connection = await mongo.connection(MONGO_URL);
   return connection.db(COMMITMENTS_DB);
@@ -241,6 +280,7 @@ export async function getCurrentWholeCommitment(id) {
   const commitment = await commitmentsCollection.findOne({
     'preimage.stateVarId': generalise(id).hex(32),
     isNullified: false,
+    ...ownedCommitmentQuery(),
   });
   return commitment;
 }
@@ -283,7 +323,10 @@ export async function getNullifiedCommitments() {
 export async function getBalance() {
   const commitmentsCollection = await getCommitmentsCollection();
   const commitments = await commitmentsCollection
-    .find({ isNullified: false }) //  no nullified
+    .find({
+      isNullified: false,
+      ...ownedCommitmentQuery(),
+    }) //  no nullified
     .toArray();
 
   let sumOfValues = 0;
@@ -295,16 +338,18 @@ export async function getBalance() {
 
 export async function getBalanceByState(name, mappingKey = null) {
   const commitmentsCollection = await getCommitmentsCollection();
-  const query = { name: name };
+  const query = {
+    name,
+    isNullified: false,
+    ...ownedCommitmentQuery(),
+  };
   if (mappingKey) query['mappingKey'] = generalise(mappingKey).integer;
   const commitments = await commitmentsCollection
     .find(query)
     .toArray();
   let sumOfValues = 0;
   commitments.forEach(commitment => {
-    sumOfValues += commitment.isNullified
-      ? 0
-      : parseInt(commitment.preimage.value, 10);
+    sumOfValues += parseInt(commitment.preimage.value, 10);
   });
   return sumOfValues;
 }
