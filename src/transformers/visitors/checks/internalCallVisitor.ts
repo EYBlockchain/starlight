@@ -18,28 +18,36 @@ export default {
         path.isInternalFunctionCall() &&
         node.expression.nodeType === 'Identifier'
       ) {
-        for (const [index, arg] of args.entries()) {
-          if (
-            arg.nodeType !== 'Identifier' &&
-            !arg.expression?.typeDescriptions?.typeIdentifier?.includes(
-              '_struct',
-            )
-          ) {
-            // If we support expressions, e.g. `a - amount`, we will need to ensure there are
-            // constraints in the circuits to prevent underflows/ overflows
-            throw new TODOError(
-              `Unsupported argument ${index + 1} in internal function call '${
-                node.expression.name
-              }'. Only identifiers and struct member accesses are currently supported.`,
-              node,
-            );
+        const functionReferencedPath = scope.getReferencedPath(node.expression);
+        const thisFunctionPath = path.getFunctionDefinition();
+        const thisFunctionTouchesSecret =
+          thisFunctionPath?.scope.modifiesSecretState();
+        const referencedFunctionTouchesSecret =
+          functionReferencedPath?.scope.modifiesSecretState();
+
+        if (thisFunctionTouchesSecret || referencedFunctionTouchesSecret) {
+          for (const [index, arg] of args.entries()) {
+            if (
+              arg.nodeType !== 'Identifier' &&
+              !arg.expression?.typeDescriptions?.typeIdentifier?.includes(
+                '_struct',
+              )
+            ) {
+              // If we support expressions, e.g. `a - amount`, we will need to ensure there are
+              // constraints in the circuits to prevent underflows/ overflows
+              throw new TODOError(
+                `Unsupported argument ${index + 1} in internal function call '${
+                  node.expression.name
+                }'. Only identifiers and struct member accesses are currently supported.`,
+                node,
+              );
+            }
           }
         }
 
         const isSecretArray = args.map(
           arg => scope.getReferencedBinding(arg)?.isSecret,
         );
-        const functionReferencedPath = scope.getReferencedPath(node.expression);
         const params = functionReferencedPath.node.parameters.parameters;
         params.forEach((param, index) => {
           if (param.isSecret) {
