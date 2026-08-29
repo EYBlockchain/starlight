@@ -134,7 +134,10 @@ export default function codeGenerator(node: any, options: any = {}): any {
         }
         if (node.expression.operator === '-='){
           increments = codeGenerator(node.expression.rightHandSide);
-          return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) + (${increments}));\n`;
+          const incrementsWithParens = node.expression.rightHandSide.nodeType === 'BinaryOperation' 
+            ? `(${increments})` 
+            : increments;
+          return  `\n${privateStateName}_newCommitmentValue = generalise(parseInt(${privateStateName}_newCommitmentValue.integer, 10) - (${incrementsWithParens}));\n`;
         }
         if (node.expression.operator === '='){
           increments = codeGenerator(node.expression.rightHandSide);
@@ -163,22 +166,30 @@ export default function codeGenerator(node: any, options: any = {}): any {
       // To ensure the left hand side is always a general number, we generalise it here (excluding the initialisation in a for loop).    
       if (!node.isInitializationAssignment && node.rightHandSide.subType !== 'generalNumber'){
         if (['+=', '-=', '*='].includes(node.operator)) {
+          const rightHandSideCode = codeGenerator(node.rightHandSide);
+          const rightHandSideWithParens = node.rightHandSide.nodeType === 'BinaryOperation' 
+            ? `(${rightHandSideCode})` 
+            : rightHandSideCode;
           return `${codeGenerator(node.leftHandSide, {
             lhs: true,
           })} = generalise(${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
             0,
-          )} ${codeGenerator(node.rightHandSide)})`;
+          )} ${rightHandSideWithParens})`;
         }
          return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
         } generalise(${codeGenerator(node.rightHandSide)})`;
       } else {
         if (['+=', '-=', '*='].includes(node.operator)) {
+          const rightHandSideCode = codeGenerator(node.rightHandSide);
+          const rightHandSideWithParens = node.rightHandSide.nodeType === 'BinaryOperation' 
+            ? `(${rightHandSideCode})` 
+            : rightHandSideCode;
           return `${codeGenerator(node.leftHandSide, {
             lhs: true,
           })} = ${codeGenerator(node.leftHandSide)} ${node.operator.charAt(
             0,
-          )} ${codeGenerator(node.rightHandSide)}`;
+          )} ${rightHandSideWithParens}`;
         }
         return `${codeGenerator(node.leftHandSide, { lhs: true })} ${
           node.operator
